@@ -1,0 +1,134 @@
+<!doctype html>
+<!--
+  Source for the social share card. Rendered to apps/web/public/og-image.png by
+  scripts/og/render-og.mjs (headless Chrome -> sharp). Edit here, then re-run:
+      node apps/web/scripts/og/render-og.mjs
+  Same tokens as the site: grey ground, white card, one black panel, Inter.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: #f0f0f0;
+        font-family: 'Inter', system-ui, sans-serif;
+        color: #161616;
+      }
+
+      .frame { display: flex; gap: 24px; width: 1200px; height: 630px; padding: 48px; }
+
+      .card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border: 1px solid rgba(22, 22, 22, 0.1);
+        border-radius: 22px;
+        padding: 52px 56px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -10px rgba(0, 0, 0, 0.12);
+      }
+
+      .eyebrow {
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #6b6b6b;
+      }
+
+      h1 {
+        margin-top: 20px;
+        font-size: 68px;
+        font-weight: 700;
+        line-height: 1.04;
+        letter-spacing: -0.028em;
+      }
+
+      .tagline {
+        margin-top: 22px;
+        max-width: 30ch;
+        font-size: 23px;
+        line-height: 1.45;
+        color: #4a4a4a;
+      }
+
+      .foot {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        color: #6b6b6b;
+      }
+      .dot { width: 5px; height: 5px; border-radius: 50%; background: #c4c4c4; }
+
+      /* The one dark panel, as on the site. */
+      .panel {
+        width: 336px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: #161616;
+        color: #ffffff;
+        border-radius: 22px;
+        padding: 48px 40px;
+      }
+      .panel .label {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.55);
+      }
+      .panel .big {
+        margin-top: 14px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 74px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .panel .sub { margin-top: 10px; font-size: 19px; color: rgba(255, 255, 255, 0.7); }
+      .mark {
+        margin-top: 44px;
+        padding-top: 26px;
+        border-top: 1px solid rgba(255, 255, 255, 0.16);
+        font-size: 17px;
+        color: rgba(255, 255, 255, 0.75);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="card">
+        <span class="eyebrow">IndiaFOSS 2026 · Bengaluru</span>
+        <h1>Community<br />Con</h1>
+        <p class="tagline">
+          The flash lightning-talk lineup, chosen by the people in the room.
+        </p>
+        <div class="foot">
+          <span>Propose on day one</span>
+          <span class="dot"></span>
+          <span>Vote with your ticket</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="label">Talks on stage</span>
+        <span class="big">6</span>
+        <span class="sub">picked by ticket-holders</span>
+        <div class="mark">FOSS United</div>
+      </div>
+    </div>
+  </body>
+</html>

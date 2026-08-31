@@ -1,0 +1,364 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   Community Con design system.
+
+   Light grey ground, white cards, one near-black feature panel. A single
+   sans face at several weights. Interaction is ink (#161616) - hover lifts
+   with shadow, not hue. Colour is reserved for state: green for open/chosen,
+   red for errors. Nothing here is textured or decorative.
+
+   Class names are shared with every page, so a page inherits the theme
+   without being touched. Change tokens in tailwind.config.js, not here.
+   ========================================================================= */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* This palette is light by design. "only light" stops Chromium's Auto
+       Dark Theme (Android) from inverting it into something muddy. */
+    color-scheme: only light;
+  }
+  /* Nothing should scroll sideways. `clip` (not `hidden`) keeps the sticky
+     header working, since it creates no scroll container. */
+  html,
+  body {
+    overflow-x: clip;
+  }
+  body {
+    @apply bg-surface-sunken font-sans text-ink;
+    overflow-wrap: break-word; /* long URLs and ticket IDs wrap, not stretch */
+    min-height: 100vh;
+  }
+  h1, h2, h3, h4 {
+    @apply font-sans font-bold;
+    letter-spacing: -0.018em;
+  }
+  *:focus-visible {
+    outline: 2px solid #161616;
+    outline-offset: 2px;
+  }
+  ::selection {
+    background-color: #161616;
+    color: #ffffff;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(22, 22, 22, 0.18); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(22, 22, 22, 0.32); }
+}
+
+@layer components {
+  /* ---- Cards ------------------------------------------------------------ */
+  .card,
+  .ui-card {
+    @apply rounded-card border border-line bg-surface shadow-card;
+  }
+  .card-hover {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .card-hover:hover {
+    @apply shadow-lift;
+    border-color: rgba(22, 22, 22, 0.18);
+  }
+  /* The one solid dark panel - stats, countdowns, footers. */
+  .card-ink {
+    @apply rounded-card bg-ink text-surface;
+  }
+  /* Kept as a hook for grid children; the layout lives in the page. */
+  .card-grid { @apply items-stretch; }
+
+  /* ---- Buttons ---------------------------------------------------------- */
+  /* Alias names are self-contained: `class="btn-ink"` works without `btn`.
+     .btn-stamp is a legacy alias and renders identically to .btn-primary. */
+  .btn,
+  .btn-primary,
+  .btn-ink,
+  .btn-stamp,
+  .btn-outline,
+  .btn-label,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-control font-sans font-semibold;
+    padding: 0.65rem 1.35rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .btn:disabled,
+  .btn-primary:disabled,
+  .btn-ink:disabled,
+  .btn-stamp:disabled,
+  .btn-outline:disabled,
+  .btn-label:disabled,
+  .btn-ghost:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-primary, .btn-ink, .btn-stamp {
+    background: #161616;
+    color: #ffffff;
+  }
+  .btn-primary:hover:not(:disabled),
+  .btn-ink:hover:not(:disabled),
+  .btn-stamp:hover:not(:disabled) {
+    background: #000000;
+    box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.35);
+  }
+
+  .btn-outline, .btn-label {
+    background: #ffffff;
+    color: #161616;
+    border: 1px solid rgba(22, 22, 22, 0.16);
+  }
+  .btn-outline:hover:not(:disabled),
+  .btn-label:hover:not(:disabled) {
+    border-color: rgba(22, 22, 22, 0.4);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.12);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: #4a4a4a;
+  }
+  .btn-ghost:hover:not(:disabled) { background: rgba(22, 22, 22, 0.05); color: #161616; }
+
+  .btn-sm { padding: 0.45rem 0.95rem; font-size: 0.8125rem; }
+
+  /* On a dark panel, buttons invert. */
+  .card-ink .btn-outline,
+  .card-ink .btn-label {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+  }
+  .card-ink .btn-outline:hover:not(:disabled),
+  .card-ink .btn-label:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.32);
+  }
+
+  /* ---- Tags / pills ----------------------------------------------------- */
+  .tag {
+    @apply inline-flex items-center font-sans font-medium;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .tag-default { background: rgba(22, 22, 22, 0.06); color: #4a4a4a; }
+  .tag-muted   { background: rgba(22, 22, 22, 0.06); color: #6b6b6b; }
+  .tag-stamp   { background: #161616; color: #ffffff; }
+  .tag-funded  { background: theme('colors.positive.soft'); color: #0f7a4e; }
+  .tag-danger  { background: theme('colors.danger.soft'); color: #c22c2c; }
+
+  /* ---- Forms ------------------------------------------------------------ */
+  .ui-input {
+    @apply w-full rounded-control bg-surface font-sans text-ink;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.875rem;
+    border: 1px solid rgba(22, 22, 22, 0.16);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .ui-input::placeholder { color: #9a9a9a; }
+  .ui-input:focus {
+    outline: none;
+    border-color: #161616;
+    box-shadow: 0 0 0 3px rgba(22, 22, 22, 0.08);
+  }
+  .ui-label {
+    @apply mb-1.5 block font-sans font-medium text-ink-light;
+    font-size: 0.8125rem;
+  }
+
+  /* ---- Typographic helpers --------------------------------------------- */
+  .supertitle,
+  .eyebrow {
+    @apply inline-flex items-center gap-1.5 font-sans font-medium uppercase text-ink-faint;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+  }
+  .page-title {
+    @apply font-sans font-bold text-ink;
+    font-size: 1.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.022em;
+  }
+  .section-title {
+    @apply font-sans font-bold text-ink;
+    font-size: 1.125rem;
+    letter-spacing: -0.015em;
+  }
+
+  /* ---- Status blocks ---------------------------------------------------- */
+  .status-open {
+    @apply rounded-control text-sm text-positive;
+    padding: 0.8rem 1rem;
+    border: 1px solid rgba(15, 122, 78, 0.24);
+    background: theme('colors.positive.soft');
+  }
+  .status-warn {
+    @apply rounded-control border border-line bg-surface text-sm text-ink-light;
+    padding: 0.8rem 1rem;
+  }
+  .status-error {
+    @apply rounded-control text-sm text-danger;
+    padding: 0.75rem 0.95rem;
+    border: 1px solid rgba(194, 44, 44, 0.24);
+    background: theme('colors.danger.soft');
+  }
+
+  /* ---- Tables ----------------------------------------------------------- */
+  .data-table {
+    @apply w-full text-sm;
+    border-collapse: collapse;
+  }
+  .data-table thead tr { border-bottom: 1px solid rgba(22, 22, 22, 0.12); }
+  .data-table th {
+    @apply px-4 py-2.5 text-left font-sans font-medium uppercase text-ink-faint;
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+  }
+  .data-table td { @apply px-4 py-3; border-bottom: 1px solid rgba(22, 22, 22, 0.06); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr { transition: background 0.12s; }
+  .data-table tbody tr:hover { background: rgba(22, 22, 22, 0.025); }
+
+  /* ---- Progress --------------------------------------------------------- */
+  .progress {
+    height: 6px;
+    background: rgba(22, 22, 22, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: #161616;
+    transition: width 0.4s ease;
+  }
+  /* Legacy alias - the old theme turned the bar orange when nearly full. */
+  .progress-fill.hot { background: #161616; }
+  .card-ink .progress { background: rgba(255, 255, 255, 0.16); }
+  .card-ink .progress-fill { background: #ffffff; }
+
+  /* ---- Misc ------------------------------------------------------------- */
+  .empty-state {
+    @apply flex flex-col items-center gap-2 rounded-card text-center text-ink-faint;
+    padding: 3rem 2rem;
+    border: 1px dashed rgba(22, 22, 22, 0.16);
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .nav-link {
+    @apply rounded-lg font-sans font-medium text-ink-light;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.875rem;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-link:hover { color: #161616; background: rgba(22, 22, 22, 0.05); }
+  .nav-link-active { color: #161616; background: rgba(22, 22, 22, 0.07); }
+
+  /* Scrollable rows that should not paint a scrollbar (mobile nav, carousels) */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* The global prefers-reduced-motion rule stops the pulse for users who
+     ask for less motion. */
+  .skeleton {
+    background: rgba(22, 22, 22, 0.07);
+    border-radius: 0.5rem;
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  /* ---- FAQ / disclosure (native details) -------------------------------- */
+  .faq-item { @apply border-b border-line last:border-b-0; }
+  .faq-item summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 font-sans text-sm font-medium text-ink;
+    transition: color 0.15s;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after {
+    content: '\2304';
+    @apply shrink-0 text-lg leading-none text-ink-faint;
+    transition: transform 0.2s ease;
+    transform: translateY(-3px);
+  }
+  .faq-item summary:hover { color: #000000; }
+  .faq-item[open] summary::after { transform: rotate(180deg) translateY(-4px); }
+  .faq-item > p { @apply pb-4 text-sm leading-relaxed text-ink-light; }
+
+  /* ---- Markdown prose (rich proposal view) ------------------------------ */
+  /* Imported proposals carry raw URLs; break them rather than let them push
+     the modal into a horizontal scroll. */
+  .ui-prose {
+    @apply text-sm leading-7 text-ink-light;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .ui-prose pre { overflow-x: auto; max-width: 100%; }
+  .ui-prose img,
+  .ui-prose table { max-width: 100%; }
+  .ui-prose h1, .ui-prose h2, .ui-prose h3 {
+    @apply mb-2 mt-5 font-sans font-bold text-ink first:mt-0;
+    font-size: 0.9375rem;
+  }
+  .ui-prose p { @apply mb-3; }
+  .ui-prose ul, .ui-prose ol { @apply mb-3 ml-5 list-disc space-y-1; }
+  .ui-prose ol { @apply list-decimal; }
+  .ui-prose a { @apply font-medium text-ink underline underline-offset-2 hover:text-black; }
+  .ui-prose strong { @apply font-semibold text-ink; }
+  .ui-prose code {
+    @apply rounded bg-surface-sunken px-1 py-0.5 font-mono text-xs text-ink;
+  }
+
+  /* ---- Modal ------------------------------------------------------------ */
+  .modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center;
+    background: rgba(22, 22, 22, 0.35);
+    backdrop-filter: blur(4px);
+  }
+  .modal-panel {
+    @apply relative my-8 w-full max-w-2xl rounded-card border border-line bg-surface;
+    box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.28);
+    animation: modal-pop 0.24s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+}
+
+/* ---- Animations --------------------------------------------------------- */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.98) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.animate-fade-in-up { animation: fade-in-up 0.35s ease both; }
+/* Legacy alias - the old theme bounced the button on vote. Now a no-op. */
+.animate-vote-pulse { animation: none; }
+
+@media (min-width: 640px) {
+  .page-title { font-size: 2.125rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
