@@ -137,9 +137,30 @@ npm run test:api
 npm run db:reset-seed:local
 ```
 
-Deploying the preview is just `apps/web/dist` on any static host —
-`public/_redirects` already handles SPA fallback. The GitHub Actions workflow deploys it to
-Cloudflare Pages and needs only `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+## Deployment
+
+The preview is a static bundle, so it deploys as an assets-only Worker — no server code, no
+bindings, no secrets.
+
+```bash
+npm run deploy        # build + wrangler deploy, using ./wrangler.jsonc
+```
+
+Cloudflare's Git integration runs the same two commands on every push to `main`. The root
+`wrangler.jsonc` exists specifically so `wrangler deploy` works from the repo root: without
+it, wrangler finds `apps/api/wrangler.toml` inside a workspace and refuses to guess which
+project is meant. It sets `not_found_handling: "single-page-application"` so `/vote`,
+`/results` and `/admin/*` resolve to `index.html` instead of 404.
+
+`apps/api/wrangler.toml` is a separate deploy target and is not wired into CI. It needs a
+real `database_id` (`wrangler d1 create community-con`) before it can ship.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs tests, type-checks and the build. It
+deliberately does **not** deploy — Cloudflare already does, and two pipelines shipping the
+same commit is how you get a confusing rollback.
+
+The bundle is portable: `apps/web/dist` works on Netlify, Pages or a zip, and
+`public/_redirects` covers SPA fallback on hosts that use it.
 
 Regenerate the social card after editing `apps/web/scripts/og/og-image.html`:
 

@@ -6,8 +6,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "vitest run",
-    "preview": "vite preview",
-    "deploy": "wrangler pages deploy dist --project-name community-con --branch main"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@cc/db": "*",

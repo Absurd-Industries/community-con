@@ -1,0 +1,24 @@
+{
+  // Deploy target for the design preview: a static-assets-only Worker serving
+  // apps/web/dist. There is no `main` because there is no server side - all the
+  // preview's data lives in the browser (see README).
+  //
+  // This file exists at the repo root because Cloudflare's Git integration runs
+  // `npx wrangler deploy` from there. Without it, wrangler finds apps/api's
+  // config in a workspace and refuses to guess which project is meant.
+  //
+  // The API Worker has its own config at apps/api/wrangler.toml and is deployed
+  // separately, if and when the backend goes live.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "community-con",
+  "compatibility_date": "2026-07-20",
+  "assets": {
+    "directory": "./apps/web/dist",
+    // Client-side routes (/vote, /results, /admin/*) must resolve to index.html
+    // rather than 404.
+    "not_found_handling": "single-page-application"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
