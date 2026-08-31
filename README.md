@@ -159,8 +159,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs tests, type-checks and the buil
 deliberately does **not** deploy — Cloudflare already does, and two pipelines shipping the
 same commit is how you get a confusing rollback.
 
-The bundle is portable: `apps/web/dist` works on Netlify, Pages or a zip, and
-`public/_redirects` covers SPA fallback on hosts that use it.
+There is deliberately no `public/_redirects`. Workers Assets rejects the usual
+`/* /index.html 200` SPA rule as an infinite loop, and `not_found_handling` already covers
+it. If you host `apps/web/dist` somewhere else (Netlify, a plain static server), add that
+host's own SPA fallback rule there.
 
 Regenerate the social card after editing `apps/web/scripts/og/og-image.html`:
 
