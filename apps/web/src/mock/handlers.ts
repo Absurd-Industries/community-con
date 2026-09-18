@@ -168,17 +168,20 @@ const routes: Array<[string, RegExp, Handler]> = [
   /**
    * The one endpoint that does not exist in apps/api yet.
    *
-   * BACKEND TODO: POST /api/ballots { ticket_hash, talk_ids[] }
-   *   - accept blindly. Never signal whether the ticket is real, in the status
+   * BACKEND TODO: POST /api/ballots { voter_hash, talk_ids[] }
+   *   - voter_hash is SHA-256 of the voter's ticket ID and email, hashed in the
+   *     browser (lib/hash.ts `voterIdHash`). Neither raw value is ever sent.
+   *   - accept blindly. Never signal whether the pair is real, in the status
    *     code, the body, or the response time.
-   *   - append-only: a re-submission is a new row, not an update.
+   *   - append-only: a re-submission is a new row with its own cast_at, not an
+   *     update.
    *   - the tally (see store.ts `tally`) decides what counts.
    */
   ['POST', /^\/api\/ballots$/, async ({ body }) => {
-    const payload = (body ?? {}) as { ticket_hash?: string; talk_ids?: string[] }
-    const ticketHash = payload.ticket_hash?.trim()
+    const payload = (body ?? {}) as { voter_hash?: string; talk_ids?: string[] }
+    const voterHash = payload.voter_hash?.trim()
     const talkIds = payload.talk_ids ?? []
-    if (!ticketHash) throw new MockHttpError('A ticket is required.', 422)
+    if (!voterHash) throw new MockHttpError('A ticket and email are required.', 422)
 
     return mutate(store => {
       const budget = store.conference.votes_per_voter
@@ -193,8 +196,10 @@ const routes: Array<[string, RegExp, Handler]> = [
 
       const ballot: Ballot = {
         id: crypto.randomUUID(),
-        ticket_hash: ticketHash,
+        voter_hash: voterHash,
         talk_ids: accepted,
+        // Every ballot is stamped with when it was cast. The tally reads this
+        // to decide which of a voter's submissions is the live one.
         cast_at: Date.now(),
       }
       store.ballots.push(ballot)

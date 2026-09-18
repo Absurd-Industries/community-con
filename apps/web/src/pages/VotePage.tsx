@@ -5,6 +5,8 @@ import { submitBallot } from '../lib/ballot.js'
 import { useTicket } from '../lib/ticket.js'
 import { formatDateTime, formatDuration } from '../lib/time.js'
 import { createVisitTalkOrder } from '../lib/talk-order.js'
+import { trackClasses } from '../lib/track-colors.js'
+import { EVENT } from '../lib/event.js'
 import TicketGate from '../components/TicketGate.js'
 import TalkDetailModal, { type TalkDetail } from '../components/TalkDetailModal.js'
 import VoteCompleteModal from '../components/VoteCompleteModal.js'
@@ -181,6 +183,8 @@ export default function VotePage() {
           <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-faint">
             <i className="ph ph-ticket" aria-hidden="true" />
             Voting as <span className="font-mono text-ink">{ticket.masked}</span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono text-ink">{ticket.maskedEmail}</span>
             <button onClick={signOut} className="underline underline-offset-2 hover:text-ink">
               use a different ticket
             </button>
@@ -209,8 +213,9 @@ export default function VotePage() {
             Pick up to {votesTotal} talks
           </span>
           <span className="text-ink-light">
-            {votingClosesAt ? `Voting closes ${votingClosesAt}.` : 'Voting is open.'} You can
-            resubmit as often as you like — only your last ballot counts.
+            {votingClosesAt ? `Voting closes ${votingClosesAt}.` : 'Voting is open.'} The top{' '}
+            {votesTotal} take the stage in {EVENT.hall}. Resubmit as often as you like; only
+            your last ballot counts.
           </span>
         </div>
       ) : (
@@ -236,6 +241,7 @@ export default function VotePage() {
         <div className="flex flex-wrap items-center gap-2">
           {talkTypes.map(type => {
             const active = filter === type
+            const track = type === 'All' ? null : trackClasses(type)
             return (
               <button
                 key={type}
@@ -243,7 +249,9 @@ export default function VotePage() {
                 className={[
                   'rounded-full border px-3.5 py-1.5 font-sans text-xs font-medium transition-colors',
                   active
-                    ? 'border-ink bg-ink text-surface'
+                    ? track
+                      ? `border-transparent ${track.solid}`
+                      : 'border-ink bg-ink text-surface'
                     : 'border-line bg-surface text-ink-faint hover:border-ink/30 hover:text-ink',
                 ].join(' ')}
               >
@@ -271,22 +279,34 @@ export default function VotePage() {
             const picked = selectedIds.has(talk.id)
             const withdrawn = Boolean(talk.withdrawn_at)
             const canPick = isOpen && !withdrawn && (picked || !atBudget)
+            // Each track carries its own IndiaFOSS accent - the ballot should
+            // look like the many communities it came from, not one brand.
+            const track = trackClasses(talk.talk_type)
             return (
               <div
                 key={talk.id}
                 className={[
-                  'card card-hover animate-fade-in-up flex min-w-0 flex-col p-5',
-                  picked ? 'ring-2 ring-ink' : '',
+                  'card card-hover animate-fade-in-up flex min-w-0 flex-col border-l-4 p-5',
+                  track.border,
+                  picked ? `ring-2 ${track.ring}` : '',
                 ].join(' ')}
                 style={{ animationDelay: `${Math.min(index, 12) * 0.03}s` }}
               >
+                {/* Segmented pill, as on the IndiaFOSS posters: the track in
+                    its own colour, the ballot state in ink beside it. Colour
+                    is identity here; state stays monochrome so "Picked" reads
+                    the same on all nine. */}
                 <div className="mb-2 flex items-center gap-2">
-                  {talk.talk_type && <span className="tag tag-muted">{talk.talk_type}</span>}
-                  {picked && (
-                    <span className="tag tag-stamp">
-                      <i className="ph-fill ph-check mr-1" aria-hidden="true" /> Picked
-                    </span>
-                  )}
+                  <span className="tag-group">
+                    {talk.talk_type && (
+                      <span className={`tag ${track.tag}`}>{talk.talk_type}</span>
+                    )}
+                    {picked && (
+                      <span className="tag tag-ink">
+                        <i className="ph-fill ph-check mr-1" aria-hidden="true" /> Picked
+                      </span>
+                    )}
+                  </span>
                   {withdrawn && <span className="tag tag-danger">Withdrawn</span>}
                 </div>
                 <h2 className="text-base font-bold leading-snug text-ink">{talk.title}</h2>
@@ -308,6 +328,7 @@ export default function VotePage() {
                     disabled={!canPick}
                     onClick={() => toggle(talk.id)}
                     className={['btn btn-sm flex-1', picked ? 'btn-outline' : 'btn-primary'].join(' ')}
+                    aria-pressed={picked}
                   >
                     {picked ? 'Remove' : 'Pick'}
                   </button>
@@ -344,7 +365,7 @@ export default function VotePage() {
               {savedAt
                 ? `Submitted ${formatDateTime(savedAt)}. Resubmit any time to replace it.`
                 : atBudget
-                  ? 'Ballot full — submit when you’re ready.'
+                  ? 'Ballot full. Submit when you’re ready.'
                   : `${votesTotal - votesUsed} more to pick.`}
             </p>
             <button
@@ -361,6 +382,7 @@ export default function VotePage() {
       {justSubmitted && (
         <VoteCompleteModal
           votesTotal={selected.length}
+          castAt={savedAt}
           deadline={votingClosesAt}
           onClose={() => setJustSubmitted(false)}
         />

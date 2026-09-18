@@ -34,6 +34,10 @@ try {
       '--headless=new',
       '--disable-gpu',
       '--hide-scrollbars',
+      // The card masks the panel with a local .webp. Without this, Chrome
+      // treats the file:// image as cross-origin and silently drops the mask,
+      // which renders a flat black panel that looks intentional.
+      '--allow-file-access-from-files',
       '--force-device-scale-factor=2',
       '--window-size=1200,630',
       // Give webfonts time to load and paint before the capture.

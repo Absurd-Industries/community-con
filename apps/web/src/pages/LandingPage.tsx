@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api.js'
-import { formatDateTime, formatDuration } from '../lib/time.js'
+import { formatDuration } from '../lib/time.js'
+import { EVENT, SCHEDULE, formatIst, formatIstDayTime, formatIstTime } from '../lib/event.js'
 import { useEffect, useState } from 'react'
 
 interface Conference {
@@ -41,7 +42,7 @@ function Step({ index, title, when, children }: {
       <div className="min-w-0">
         <h3 className="text-[0.95rem] font-bold text-ink">{title}</h3>
         <p className="mt-0.5 font-mono text-xs text-ink-faint">{when}</p>
-        <p className="mt-2 text-sm leading-relaxed text-ink-light">{children}</p>
+        <div className="mt-2 text-sm leading-relaxed text-ink-light">{children}</div>
       </div>
     </li>
   )
@@ -58,27 +59,52 @@ export default function LandingPage() {
   const target = isOpen ? conference?.voting_closes_at : conference?.voting_opens_at
   const offset = conference ? conference.server_now - Date.now() : 0
   const showCountdown = target != null && target > now + offset
+  const slots = conference?.votes_per_voter ?? EVENT.slotCount
 
   return (
     <div className="space-y-10">
       {/* Hero */}
       <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="card p-7 sm:p-9">
-          <p className="eyebrow">IndiaFOSS 2026 · Bengaluru</p>
-          <h1 className="page-title mt-3 max-w-xl">
-            The lightning talk lineup, chosen by the room.
-          </h1>
+
+          <h1 className="page-title mt-3 max-w-xl">{EVENT.tagline}</h1>
           <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
-            Anyone with a ticket can propose a flash talk on day one. Anyone with a ticket
-            votes on day two. The talks with the most support go on stage after lunch — no
-            programme committee, no back room.
+            Propose a talk. Vote for the ones you want to see. The {slots} favourites go up
+            in {EVENT.hall} in front of {EVENT.audience} people.
           </p>
+          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-5 text-sm">
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-ink-faint">Slots</dt>
+              <dd className="mt-0.5 font-semibold text-ink">{slots} talks</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-ink-faint">Each</dt>
+              <dd className="mt-0.5 font-semibold text-ink">
+                {EVENT.slotMinutes} minutes, no Q&amp;A
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-ink-faint">On stage</dt>
+              <dd className="mt-0.5 font-semibold text-ink">
+                {formatIst(SCHEDULE.stageStartsAt, { weekday: undefined })}
+              </dd>
+            </div>
+          </dl>
           <div className="mt-6 flex flex-wrap gap-2.5">
             <Link to="/vote" className="btn-primary">
               {isOpen ? 'Vote now' : 'Open the ballot'}
             </Link>
+            <a
+              href={EVENT.links.submit}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-outline"
+            >
+              Propose a talk
+              <i className="ph ph-arrow-up-right" aria-hidden="true" />
+            </a>
             {conference?.results_public && (
-              <Link to="/results" className="btn-outline">
+              <Link to="/results" className="btn-ghost">
                 See the results
               </Link>
             )}
@@ -86,7 +112,9 @@ export default function LandingPage() {
         </div>
 
         <div className="card-ink flex flex-col justify-center p-7">
-          <div>
+          {/* The festival's maze motif, tinted by this element's text colour. */}
+          <div className="maze text-accent opacity-30" aria-hidden="true" />
+          <div className="relative">
             <p className="text-xs font-medium uppercase tracking-wide text-surface/60">
               {showCountdown ? (isOpen ? 'Voting closes in' : 'Voting opens in') : 'Voting'}
             </p>
@@ -98,18 +126,27 @@ export default function LandingPage() {
                   : 'Closed'}
             </p>
           </div>
-          <dl className="mt-7 space-y-3 border-t border-white/15 pt-5 text-sm">
+          <dl className="relative mt-7 space-y-3 border-t border-white/15 pt-5 text-sm">
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-surface/60">Votes per ticket</dt>
-              <dd className="font-mono font-semibold">{conference?.votes_per_voter ?? '—'}</dd>
+              <dd className="font-mono font-semibold">{slots}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-surface/60">Voting closes</dt>
               <dd className="text-right font-mono text-xs">
-                {formatDateTime(conference?.voting_closes_at ?? null) ?? '—'}
+                {formatIst(SCHEDULE.votingClosesAt)}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-surface/60">Results</dt>
+              <dd className="text-right font-mono text-xs">
+                {formatIst(SCHEDULE.resultsAt)}
               </dd>
             </div>
           </dl>
+          <p className="relative mt-4 text-[0.7rem] leading-relaxed text-surface/50">
+            All times IST, at {EVENT.venue}.
+          </p>
         </div>
       </section>
 
@@ -117,17 +154,50 @@ export default function LandingPage() {
       <section>
         <h2 className="section-title mb-4">How it works</h2>
         <ol className="grid gap-3 sm:grid-cols-3">
-          <Step index={1} title="Propose" when="Day one, until 4pm">
-            Submit a five-minute talk on anything you're working on. Proposals close when the
-            last session of day one starts.
+          <Step
+            index={1}
+            title="Propose"
+            when={`Until ${formatIst(SCHEDULE.cfpClosesAt)}`}
+          >
+            <p>Anything you’re working on. {EVENT.slotMinutes} minutes, no slides required.</p>
+            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+              <a
+                href={EVENT.links.submit}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-ink underline underline-offset-2"
+              >
+                Submit a proposal
+              </a>
+              <a
+                href={EVENT.links.proposals}
+                target="_blank"
+                rel="noreferrer"
+                className="text-ink-faint underline underline-offset-2 hover:text-ink"
+              >
+                See what’s in
+              </a>
+            </p>
           </Step>
-          <Step index={2} title="Vote" when="Until noon on day two">
-            Enter your ticket ID and pick your favourites — up to{' '}
-            {conference?.votes_per_voter ?? 'a handful of'} of them. Change your mind as often
-            as you like; the last ballot is the one that counts.
+          <Step
+            index={2}
+            title="Vote"
+            when={`${formatIstDayTime(SCHEDULE.votingOpensAt)} → ${formatIst(SCHEDULE.votingClosesAt)}`}
+          >
+            <p>
+              Pick up to {slots} talks. Change your mind as often as you like; only your
+              last ballot counts.
+            </p>
           </Step>
-          <Step index={3} title="Watch" when="After lunch, day two">
-            Results go up at lunch. The top talks take the stage an hour later.
+          <Step
+            index={3}
+            title="Watch"
+            when={`Results ${formatIstDayTime(SCHEDULE.resultsAt)} · stage ${formatIstDayTime(SCHEDULE.stageStartsAt)}`}
+          >
+            <p>
+              Results at {formatIstTime(SCHEDULE.resultsAt)}, then seven talks in{' '}
+              {EVENT.hall} at {formatIstTime(SCHEDULE.stageStartsAt)}.
+            </p>
           </Step>
         </ol>
       </section>
@@ -139,46 +209,86 @@ export default function LandingPage() {
           <details className="faq-item">
             <summary>Do I need a ticket?</summary>
             <p>
-              Yes. Voting is for people in the room. You'll be asked for the ticket ID on your
-              badge — the same one in your ticket email.
+              Yes, voting is for people in the room. You’ll need the ticket ID from your
+              badge plus the email you claimed it with.
+            </p>
+          </details>
+          <details className="faq-item">
+            <summary>Why do you want my email?</summary>
+            <p>
+              A ticket is only yours once you claim it with an email, one address per
+              ticket, so the pair is what makes you you. Your browser hashes the two
+              together and sends just the hash. We couldn’t email you if we tried.
             </p>
           </details>
           <details className="faq-item">
             <summary>Will it tell me if my ticket is valid?</summary>
             <p>
-              No, and that's deliberate. If the form said "invalid ticket", anyone could sit
-              outside and guess ticket numbers until one worked. Every ballot is accepted;
-              tickets are checked once, later, when the votes are counted.
+              No, on purpose. If it said “invalid ticket”, anyone could sit outside and guess
+              until something worked. We check tickets once, later, when we count.
             </p>
           </details>
           <details className="faq-item">
             <summary>Can I vote more than once?</summary>
             <p>
-              You can submit as many times as you like. Only the most recent ballot from each
-              ticket is counted, so resubmitting replaces your previous picks rather than
-              adding to them.
+              Submit as often as you like. Only your latest ballot counts, so resubmitting
+              replaces your picks rather than adding to them.
             </p>
           </details>
           <details className="faq-item">
             <summary>Can I vote for my own talk?</summary>
             <p>
-              Nothing stops you. With one vote among hundreds it doesn't move the needle, and
-              the alternative — linking proposals to tickets — would cost everyone their
-              anonymity for no real gain.
+              Go ahead. One vote among hundreds won’t move the needle, and stopping you would
+              mean linking proposals to tickets, which costs everyone their anonymity.
             </p>
           </details>
           <details className="faq-item">
             <summary>Is my vote anonymous?</summary>
             <p>
-              Your ticket ID is hashed in your browser before anything is stored, and ballots
-              are never shown per-person — only as totals.
+              Yes. Your details are hashed before anything is stored, and ballots only ever
+              appear as totals.
             </p>
           </details>
         </div>
       </section>
 
       <footer className="border-t border-line pt-6 text-sm text-ink-faint">
-        <p>Community Con is part of IndiaFOSS 2026, run by FOSS United.</p>
+        <p>
+          {EVENT.name} is part of{' '}
+          <a
+            href={EVENT.links.indiafoss}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            {EVENT.conference}
+          </a>
+          , run by FOSS United. {EVENT.hall}, {EVENT.venue}, {EVENT.city}.
+        </p>
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          <a
+            href={EVENT.links.event}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            Event page
+          </a>
+          <a
+            href={EVENT.links.proposals}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            All proposals
+          </a>
+          <a
+            href={`mailto:${EVENT.contactEmail}`}
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            {EVENT.contactEmail}
+          </a>
+        </p>
       </footer>
     </div>
   )

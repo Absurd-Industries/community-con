@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { sha256Hex } from '../../lib/hash.js'
-import { getStore, mutate, tally, type DemoStore, type TallySummary } from '../../mock/store.js'
-import { DEMO_VALID_TICKETS } from '../../mock/seed.js'
+import { getStore, hashPairs, mutate, tally, type DemoStore, type TallySummary } from '../../mock/store.js'
+import { DEMO_OFFICIAL_CSV } from '../../mock/seed.js'
+import { parseVoterList } from '../../lib/voter-list.js'
 import { formatDateTime } from '../../lib/time.js'
 
 /**
  * The tally.
  *
  * Ballots are accepted from anyone, so nothing is decided until this page runs.
- * Paste the official ticket list, and it: hashes each ID, drops ballots whose
- * ticket is not on the list, keeps only the latest ballot from each remaining
- * ticket, and counts what's left.
+ * Paste the official list of claimed tickets - `ticket_id,email` per line - and
+ * it: hashes each pair exactly the way the vote page did, drops ballots whose
+ * hash is not on the list, keeps only the latest ballot from each remaining
+ * voter, and counts what's left.
  *
  * This is a preview of the mechanic, not the production tally - the real one
  * runs server-side against the ballot table. The rule it implements lives in
@@ -24,6 +25,13 @@ interface Row {
   presenter_name: string
   vote_count: number
   rank: number
+  /**
+   * Rank alone cannot say who is on stage. A three-way tie at rank 6 puts
+   * eight talks at "rank <= 7", and there are only seven slots. A talk is
+   * selected only if everyone ahead of it plus its whole tie group fits;
+   * a tie straddling the cutoff is undecided until an organiser breaks it.
+   */
+  placing: 'selected' | 'tie-break' | 'out'
 }
 
 export default function TallyPage() {
@@ -37,18 +45,13 @@ export default function TallyPage() {
     getStore().then(setStore)
   }, [])
 
-  const parsedTickets = useMemo(
-    () =>
-      [...new Set(raw.split(/[\s,;]+/).map(t => t.trim().toUpperCase()).filter(Boolean))],
-    [raw]
-  )
+  const parsed = useMemo(() => parseVoterList(raw), [raw])
 
   async function runTally() {
     if (!store) return
     setBusy(true)
     try {
-      const hashes = await Promise.all(parsedTickets.map(sha256Hex))
-      setApplied(new Set(hashes))
+      setApplied(new Set(await hashPairs(parsed.pairs)))
     } finally {
       setBusy(false)
     }
@@ -59,7 +62,7 @@ export default function TallyPage() {
   const result = useMemo(() => {
     if (!store) return null
     const candidate: DemoStore = applied
-      ? { ...store, valid_ticket_hashes: [...applied] }
+      ? { ...store, valid_voter_hashes: [...applied] }
       : store
     const { ballots, summary } = tally(candidate)
 
@@ -80,22 +83,31 @@ export default function TallyPage() {
       }))
       .sort((a, b) => b.vote_count - a.vote_count || a.title.localeCompare(b.title))
 
+    const slots = store.conference.votes_per_voter
+
     let previousVotes: number | undefined
     let previousRank = 0
     const rows: Row[] = sorted.map((talk, index) => {
       const rank = talk.vote_count === previousVotes ? previousRank : index + 1
       previousVotes = talk.vote_count
       previousRank = rank
-      return { ...talk, rank }
+
+      const ahead = sorted.filter(t => t.vote_count > talk.vote_count).length
+      const tied = sorted.filter(t => t.vote_count === talk.vote_count).length
+      const placing: Row['placing'] =
+        ahead + tied <= slots ? 'selected' : ahead < slots ? 'tie-break' : 'out'
+
+      return { ...talk, rank, placing }
     })
 
-    return { rows, summary, slots: store.conference.votes_per_voter }
+    const contested = rows.filter(r => r.placing === 'tie-break').length
+    return { rows, summary, slots, contested }
   }, [store, applied])
 
   async function commit() {
     if (!applied) return
     await mutate(current => {
-      current.valid_ticket_hashes = [...applied]
+      current.valid_voter_hashes = [...applied]
     })
     // Live results read the same rule, so everything that shows vote counts
     // needs to re-read once the official list is in place.
@@ -107,8 +119,8 @@ export default function TallyPage() {
     return <div className="skeleton h-64 w-full" />
   }
 
-  const { summary, rows, slots } = result
-  const committed = store.valid_ticket_hashes.length > 0
+  const { summary, rows, slots, contested } = result
+  const committed = store.valid_voter_hashes.length > 0
 
   return (
     <div className="space-y-6">
@@ -117,8 +129,8 @@ export default function TallyPage() {
         <h1 className="page-title mt-2">Tally</h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-light">
           Ballots were accepted without checking anyone's ticket. This is where that gets
-          resolved: paste the official ticket list, and only the latest ballot from each
-          listed ticket is counted.
+          resolved: paste the official list of claimed tickets, and only the latest ballot
+          from each listed pair is counted.
         </p>
       </div>
 
@@ -126,30 +138,39 @@ export default function TallyPage() {
         {/* Ticket list input */}
         <div className="card p-5">
           <label htmlFor="tickets" className="ui-label">
-            Official ticket IDs
+            Official list of claimed tickets
           </label>
           <textarea
             id="tickets"
             value={raw}
             onChange={event => setRaw(event.target.value)}
             rows={9}
-            placeholder={'IF26-4821\nIF26-1170\nIF26-9034'}
+            placeholder={
+              'ticket_id,email\nIF26-4821,meera@example.com\nIF26-1170,anirban@example.org'
+            }
             className="ui-input resize-y font-mono text-xs"
           />
-          <p className="mt-2 text-xs text-ink-faint">
-            One per line, or separated by commas or spaces.{' '}
-            {parsedTickets.length > 0 && (
-              <span className="text-ink">{parsedTickets.length} unique.</span>
+          <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+            One <code className="font-mono">ticket_id,email</code> per line. A header row is
+            fine.{' '}
+            {parsed.pairs.length > 0 && (
+              <span className="text-ink">{parsed.pairs.length} pairs.</span>
+            )}{' '}
+            {parsed.duplicates > 0 && <span>{parsed.duplicates} duplicate. </span>}
+            {parsed.skipped.length > 0 && (
+              <span className="text-danger">
+                {parsed.skipped.length} line{parsed.skipped.length === 1 ? '' : 's'} skipped
+                (line{parsed.skipped.length === 1 ? '' : 's'}{' '}
+                {parsed.skipped.slice(0, 5).join(', ')}
+                {parsed.skipped.length > 5 ? '…' : ''}).
+              </span>
             )}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button onClick={runTally} disabled={busy || parsedTickets.length === 0} className="btn-primary btn-sm">
+            <button onClick={runTally} disabled={busy || parsed.pairs.length === 0} className="btn-primary btn-sm">
               {busy ? 'Hashing…' : 'Run tally'}
             </button>
-            <button
-              onClick={() => setRaw(DEMO_VALID_TICKETS.join('\n'))}
-              className="btn-outline btn-sm"
-            >
+            <button onClick={() => setRaw(DEMO_OFFICIAL_CSV)} className="btn-outline btn-sm">
               Load sample list
             </button>
             {applied && (
@@ -183,13 +204,13 @@ export default function TallyPage() {
 
           <dl className="mt-6 space-y-2.5 border-t border-white/15 pt-5 text-sm">
             <Line label="Ballots submitted" value={summary.ballots_cast} />
-            <Line label="From tickets not on the list" value={summary.from_unknown_tickets} muted />
+            <Line label="From pairs not on the list" value={summary.from_unknown_tickets} muted />
             <Line label="Superseded by a later ballot" value={summary.superseded} muted />
             <Line
               label="Ticket-holders who didn't vote"
               value={
                 summary.eligible_tickets === null
-                  ? '—'
+                  ? 'n/a'
                   : Math.max(0, summary.eligible_tickets - summary.counted)
               }
               muted
@@ -197,8 +218,8 @@ export default function TallyPage() {
           </dl>
           {!applied && (
             <p className="mt-5 text-xs leading-relaxed text-surface/60">
-              Every ballot is being counted, including ones cast with tickets that may not
-              exist. Paste the official list to see the difference.
+              Every ballot is being counted, including ones cast with tickets and emails that
+              may not exist. Paste the official list to see the difference.
             </p>
           )}
         </div>
@@ -209,8 +230,14 @@ export default function TallyPage() {
         <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-5 py-4">
           <h2 className="section-title">Ranked result</h2>
           <p className="text-xs text-ink-faint">
-            Top {slots} take the stage. A shared rank is a genuine tie — break it on the
-            Results page.
+            Top {slots} take the stage.{' '}
+            {contested > 0 ? (
+              <span className="text-danger">
+                {contested} talks are tied across the cutoff. Break it on the Results page.
+              </span>
+            ) : (
+              'A shared rank is a genuine tie. Break it on the Results page.'
+            )}
           </p>
         </div>
         <table className="data-table">
@@ -224,13 +251,18 @@ export default function TallyPage() {
           </thead>
           <tbody>
             {rows.map(row => (
-              <tr key={row.id} className={row.rank <= slots ? '' : 'text-ink-faint'}>
+              <tr key={row.id} className={row.placing === 'out' ? 'text-ink-faint' : ''}>
                 <td className="font-mono tabular-nums">{row.rank}</td>
                 <td>
-                  <span className={row.rank <= slots ? 'font-semibold text-ink' : ''}>
+                  <span className={row.placing === 'selected' ? 'font-semibold text-ink' : ''}>
                     {row.title}
                   </span>
-                  {row.rank <= slots && <span className="tag tag-funded ml-2">Selected</span>}
+                  {row.placing === 'selected' && (
+                    <span className="tag tag-funded ml-2">Selected</span>
+                  )}
+                  {row.placing === 'tie-break' && (
+                    <span className="tag tag-default ml-2">Tie-break needed</span>
+                  )}
                 </td>
                 <td className="text-ink-faint">{row.presenter_name}</td>
                 <td className="text-right font-mono tabular-nums">{row.vote_count}</td>
@@ -243,7 +275,7 @@ export default function TallyPage() {
       <p className="text-xs text-ink-faint">
         Latest ballot in the log: {formatDateTime(
           store.ballots.reduce((latest, b) => Math.max(latest, b.cast_at), 0) || null
-        ) ?? '—'}
+        ) ?? 'none yet'}
       </p>
     </div>
   )

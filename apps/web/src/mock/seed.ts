@@ -1,19 +1,22 @@
 import type { Conference, Talk } from '@cc/db'
+import { EVENT, SCHEDULE } from '../lib/event.js'
 
 /**
  * Demo data for the design preview.
  *
- * Every proposal, speaker and ticket ID below is invented. Swap this file for a
- * real CSV export when there is one - nothing else reads it.
+ * The event details are real (see lib/event.ts). Every proposal, speaker,
+ * ticket ID and email address below is invented - the CFP had not opened when
+ * this was written. Swap this file for a real export when there is one; nothing
+ * else reads it.
  */
 
-export const CONFERENCE_ID = 'conf_community_con_2026'
+export const CONFERENCE_ID = 'conf_communi_con_2026'
 
 /** Flash-talk slots on the day. Also the vote budget: one vote per slot. */
-export const SLOT_COUNT = 6
+export const SLOT_COUNT = EVENT.slotCount
 
-/** Minutes per flash talk. */
-const SLOT_MINUTES = 5
+/** Minutes per talk. No Q&A. */
+const SLOT_MINUTES = EVENT.slotMinutes
 
 interface SeedTalk {
   title: string
@@ -30,7 +33,7 @@ const TALKS: SeedTalk[] = [
     bio: 'Network engineer. Runs a small WISP in the Nilgiris.',
     track: 'Infrastructure',
     pitch:
-      'Five minutes, one Pi, and a working BGP-speaking edge router. What breaks first, what breaks worst, and why the answer is almost always the SD card.',
+      'Ten minutes, one Pi, and a working BGP-speaking edge router. What breaks first, what breaks worst, and why the answer is almost always the SD card.',
   },
   {
     title: "I read the kernel's RNG so you don't have to",
@@ -86,7 +89,7 @@ const TALKS: SeedTalk[] = [
     bio: 'Lawyer. Reformed. Now writes about licensing.',
     track: 'Policy',
     pitch:
-      'Contributor licence agreements are sold as risk management and usually bought as a moat. Five minutes on what a DCO gets you instead, and when a CLA is genuinely the right call.',
+      'Contributor licence agreements are sold as risk management and usually bought as a moat. Ten minutes on what a DCO gets you instead, and when a CLA is genuinely the right call.',
   },
   {
     title: 'Typesetting Devanagari properly: a bug report in three acts',
@@ -139,55 +142,122 @@ const TALKS: SeedTalk[] = [
 ]
 
 /**
- * Ticket IDs that have cast a ballot in the seeded data.
+ * A claimed ticket: the ID, and the address it was claimed with.
  *
- * Some of these deliberately do NOT appear in DEMO_VALID_TICKETS - they stand in
- * for votes cast with a made-up or refunded ticket, which is exactly what the
- * tally is supposed to discard.
+ * Neither half identifies a participant on its own. The ticketing system pairs
+ * them at claim time and refuses to bind one email to several tickets, so the
+ * PAIR is the identity - which is what gets hashed. See lib/hash.ts.
  */
-export const DEMO_CAST_TICKETS: string[] = [
-  'IF26-4821', 'IF26-1170', 'IF26-9034', 'IF26-2265', 'IF26-7712',
-  'IF26-3398', 'IF26-8846', 'IF26-5501', 'IF26-6627', 'IF26-1093',
-  'IF26-4450', 'IF26-2984', 'IF26-7136', 'IF26-3357', 'IF26-9902',
-  'IF26-6018', 'IF26-8273', 'IF26-1544', 'IF26-5860', 'IF26-2411',
-  'IF26-7799', 'IF26-3082', 'IF26-4635', 'IF26-9147', 'IF26-6390',
-  'IF26-1826', 'IF26-8504', 'IF26-2758', 'IF26-5219', 'IF26-7043',
-  // Not on the official list - these get discarded at tally time.
-  'IF26-0001', 'IF26-0002', 'IF26-9999', 'ABCD-1234',
+export interface VoterPair {
+  ticket: string
+  email: string
+}
+
+/**
+ * Pairs that have cast a ballot in the seeded data.
+ *
+ * The last four deliberately do NOT appear in DEMO_OFFICIAL_PAIRS - they stand
+ * in for votes cast with a made-up, refunded or unclaimed ticket, which is
+ * exactly what the tally is supposed to discard.
+ */
+export const DEMO_CAST_PAIRS: VoterPair[] = [
+  { ticket: 'IF26-4821', email: 'meera.raghunathan@example.com' },
+  { ticket: 'IF26-1170', email: 'anirban.dasgupta@example.org' },
+  { ticket: 'IF26-9034', email: 'fatima.sheikh@example.com' },
+  { ticket: 'IF26-2265', email: 'karthik.v@example.com' },
+  { ticket: 'IF26-7712', email: 'sreelakshmi.nair@example.org' },
+  { ticket: 'IF26-3398', email: 'devendra.pawar@example.com' },
+  { ticket: 'IF26-8846', email: 'ritu.malhotra@example.com' },
+  { ticket: 'IF26-5501', email: 'joseph.mathew@example.org' },
+  { ticket: 'IF26-6627', email: 'aditi.kulkarni@example.com' },
+  { ticket: 'IF26-1093', email: 'imnainla.jamir@example.com' },
+  { ticket: 'IF26-4450', email: 'pranav.iyer@example.org' },
+  { ticket: 'IF26-2984', email: 'shalini.bose@example.com' },
+  { ticket: 'IF26-7136', email: 'bhaskar.saikia@example.com' },
+  { ticket: 'IF26-3357', email: 'tanvi.deshmukh@example.org' },
+  { ticket: 'IF26-9902', email: 'nikhil.rao@example.com' },
+  { ticket: 'IF26-6018', email: 'priya.menon@example.com' },
+  { ticket: 'IF26-8273', email: 'arjun.shetty@example.org' },
+  { ticket: 'IF26-1544', email: 'zainab.qureshi@example.com' },
+  { ticket: 'IF26-5860', email: 'rohan.gupta@example.com' },
+  { ticket: 'IF26-2411', email: 'divya.krishnan@example.org' },
+  { ticket: 'IF26-7799', email: 'sandeep.yadav@example.com' },
+  { ticket: 'IF26-3082', email: 'lakshmi.prasad@example.com' },
+  { ticket: 'IF26-4635', email: 'faisal.rahman@example.org' },
+  { ticket: 'IF26-9147', email: 'neha.bhatt@example.com' },
+  { ticket: 'IF26-6390', email: 'vivek.nambiar@example.com' },
+  { ticket: 'IF26-1826', email: 'ananya.sarkar@example.org' },
+  { ticket: 'IF26-8504', email: 'gurpreet.singh@example.com' },
+  { ticket: 'IF26-2758', email: 'kavya.reddy@example.com' },
+  { ticket: 'IF26-5219', email: 'tenzin.norbu@example.org' },
+  { ticket: 'IF26-7043', email: 'siddharth.jain@example.com' },
+
+  // Not on the official list - discarded at tally time.
+  { ticket: 'IF26-0001', email: 'nobody@example.com' },
+  { ticket: 'IF26-0002', email: 'someone.else@example.org' },
+  { ticket: 'IF26-9999', email: 'guessing@example.com' },
+  { ticket: 'ABCD-1234', email: 'not.even.trying@example.com' },
+
+  /**
+   * The same person as the very first entry, typed differently on their second
+   * visit: capitalised email, lowercase ticket, a trailing space. Normalisation
+   * in `voterIdHash` collapses this to one voter - so the tally shows it as a
+   * superseded ballot, not a second one. Remove this and the demo silently
+   * double-counts them, which is the bug the normalisation exists to prevent.
+   */
+  { ticket: 'if26-4821 ', email: 'Meera.Raghunathan@Example.COM' },
 ]
 
-/** The "official" ticket list an organiser would paste into the tally page. */
-export const DEMO_VALID_TICKETS: string[] = [
-  ...DEMO_CAST_TICKETS.slice(0, 30),
+/**
+ * The official list of claimed tickets, as an organiser would export it and
+ * paste into the tally page.
+ */
+export const DEMO_OFFICIAL_PAIRS: VoterPair[] = [
+  ...DEMO_CAST_PAIRS.slice(0, 30),
   // Ticket-holders who never voted. Turnout should reflect them.
-  'IF26-3741', 'IF26-8195', 'IF26-2606', 'IF26-5478', 'IF26-9320',
-  'IF26-1259', 'IF26-6884', 'IF26-4067', 'IF26-7512', 'IF26-3930',
+  { ticket: 'IF26-3741', email: 'harini.balaji@example.com' },
+  { ticket: 'IF26-8195', email: 'omar.farooq@example.org' },
+  { ticket: 'IF26-2606', email: 'sneha.pillai@example.com' },
+  { ticket: 'IF26-5478', email: 'rajat.kapoor@example.com' },
+  { ticket: 'IF26-9320', email: 'ishita.ghosh@example.org' },
+  { ticket: 'IF26-1259', email: 'mahesh.kulkarni@example.com' },
+  { ticket: 'IF26-6884', email: 'ayesha.khan@example.com' },
+  { ticket: 'IF26-4067', email: 'dinesh.kumar@example.org' },
+  { ticket: 'IF26-7512', email: 'pooja.shenoy@example.com' },
+  { ticket: 'IF26-3930', email: 'abhishek.das@example.com' },
 ]
 
-export function seedConference(now: number): Conference {
-  const HOUR = 60 * 60 * 1000
+/** The sample list, in the CSV shape the tally page parses. */
+export const DEMO_OFFICIAL_CSV = [
+  'ticket_id,email',
+  ...DEMO_OFFICIAL_PAIRS.map(pair => `${pair.ticket},${pair.email}`),
+].join('\n')
+
+export function seedConference(): Conference {
   return {
     id: CONFERENCE_ID,
-    name: 'Community Con',
+    name: EVENT.name,
     description:
-      'The flash lightning-talk hour at IndiaFOSS 2026, programmed by the people in the room. ' +
-      `Proposals closed at the end of day one; the top ${SLOT_COUNT} take the stage after lunch on day two.`,
-    // Anchored to load time so the demo is never stale: voting opened two hours
-    // ago and closes tomorrow morning.
-    voting_opens_at: now - 2 * HOUR,
-    voting_closes_at: now + 20 * HOUR,
+      `${EVENT.tagline} Community members propose talks, ticket-holders vote, and the ` +
+      `top ${SLOT_COUNT} take the main stage in ${EVENT.hall} before ${EVENT.audience} people.`,
+    voting_opens_at: SCHEDULE.votingOpensAt,
+    voting_closes_at: SCHEDULE.votingClosesAt,
     voting_force_status: 'scheduled',
     votes_per_voter: SLOT_COUNT,
     results_public: 0,
     speaker_visibility: 'basic',
-    ballot_locked_at: now - 2 * HOUR,
-    ballot_talk_count: TALKS.length,
-    created_at: now - 72 * HOUR,
+    // The ballot locks when voting opens; before that it is still editable.
+    ballot_locked_at: null,
+    ballot_talk_count: null,
+    created_at: SCHEDULE.cfpOpensAt,
   }
 }
 
-export function seedTalks(now: number): Talk[] {
-  const HOUR = 60 * 60 * 1000
+export function seedTalks(): Talk[] {
+  // Spread submissions across the real CFP window, newest first.
+  const window = SCHEDULE.cfpClosesAt - SCHEDULE.cfpOpensAt
+  const step = window / (TALKS.length + 1)
+
   return TALKS.map((talk, index) => ({
     id: `talk_${String(index + 1).padStart(2, '0')}`,
     conference_id: CONFERENCE_ID,
@@ -203,8 +273,6 @@ export function seedTalks(now: number): Talk[] {
     references: null,
     withdrawn_at: null,
     withdrawal_reason: null,
-    // Spread submissions across the day-one CFP window, newest first.
-    created_at: now - (26 + index) * HOUR,
+    created_at: Math.round(SCHEDULE.cfpClosesAt - (index + 1) * step),
   }))
 }
-

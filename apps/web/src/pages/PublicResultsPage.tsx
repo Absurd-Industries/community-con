@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api.js'
+import { trackClasses } from '../lib/track-colors.js'
+import { EVENT } from '../lib/event.js'
 
 interface TalkResult {
   id: string
   title: string
   presenter_name?: string
+  talk_type?: string | null
   vote_count: number
   rank: number
 }
@@ -47,6 +50,26 @@ export default function PublicResultsPage() {
 
   const talks = data?.talks ?? []
   const maxVotes = Math.max(1, ...talks.map((t) => t.vote_count))
+  // One vote per slot, so the vote budget is also the number of talks that fit.
+  const slots = data?.method.votes_per_voter ?? EVENT.slotCount
+
+  /**
+   * Who is actually on stage, given there are only `slots` of them.
+   *
+   * Rank alone is not enough: a three-way tie at rank 6 puts eight talks at
+   * "rank <= 7", and announcing eight winners for seven slots is a promise the
+   * schedule cannot keep. A talk is confirmed only if everyone ahead of it
+   * PLUS its whole tie group still fits. A tie straddling the cutoff is
+   * reported as exactly what it is - undecided, pending the organisers'
+   * tie-break.
+   */
+  const placing = (talk: TalkResult) => {
+    const ahead = talks.filter((t) => t.vote_count > talk.vote_count).length
+    const tied = talks.filter((t) => t.vote_count === talk.vote_count).length
+    if (ahead + tied <= slots) return 'on-stage' as const
+    if (ahead < slots) return 'tie-break' as const
+    return 'out' as const
+  }
 
   return (
     <div className="min-h-screen text-ink">
@@ -64,7 +87,7 @@ export default function PublicResultsPage() {
             {[
               { label: 'Participating voters', value: data.stats.participating_voters },
               { label: 'Total votes', value: data.stats.total_votes },
-              { label: 'Votes per voter', value: data.method.votes_per_voter },
+              { label: 'Slots on stage', value: data.method.votes_per_voter },
             ].map((s) => (
               <div key={s.label} className="ui-card p-5">
                 <p className="eyebrow">{s.label}</p>
@@ -81,29 +104,57 @@ export default function PublicResultsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {talks.map((talk, i) => (
-              <div key={talk.id} className="ui-card flex items-center gap-4 p-4">
-                <span
+            {talks.map((talk, i) => {
+              const rank = talk.rank ?? i + 1
+              const place = placing(talk)
+              const onStage = place === 'on-stage'
+              const track = trackClasses(talk.talk_type)
+              return (
+                <div
+                  key={talk.id}
                   className={[
-                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold',
-                    i === 0 ? 'bg-ink text-surface' : 'bg-ink/8 text-ink-faint',
+                    'ui-card flex items-center gap-4 border-l-4 p-4',
+                    track.border,
+                    place === 'out' ? 'opacity-70' : '',
                   ].join(' ')}
                 >
-                  {talk.rank ?? i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-ink">{talk.title}</p>
-                  {talk.presenter_name && <p className="truncate text-sm text-ink-faint">{talk.presenter_name}</p>}
-                  <div className="progress mt-2">
-                    <div className="progress-fill" style={{ width: `${(talk.vote_count / maxVotes) * 100}%` }} />
+                  <span
+                    className={[
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold',
+                      onStage ? 'bg-ink text-surface' : 'bg-ink/8 text-ink-faint',
+                    ].join(' ')}
+                  >
+                    {rank}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      {talk.talk_type && <span className={`tag ${track.tag}`}>{talk.talk_type}</span>}
+                      {onStage && <span className="tag tag-ink">On stage</span>}
+                      {place === 'tie-break' && (
+                        <span className="tag tag-default">Tie, organisers deciding</span>
+                      )}
+                    </div>
+                    <p className="truncate font-bold text-ink">{talk.title}</p>
+                    {talk.presenter_name && <p className="truncate text-sm text-ink-faint">{talk.presenter_name}</p>}
+                    {/* currentColor here tints the bar with the track's own
+                        accent - decoration, so the vivid value is fine. */}
+                    <div className={`progress mt-2 ${track.text}`}>
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width: `${(talk.vote_count / maxVotes) * 100}%`,
+                          backgroundColor: 'currentColor',
+                        }}
+                      />
+                    </div>
                   </div>
+                  <span className="shrink-0 text-right">
+                    <span className="text-xl font-bold">{talk.vote_count}</span>
+                    <span className="block text-xs text-ink-faint">votes</span>
+                  </span>
                 </div>
-                <span className="shrink-0 text-right">
-                  <span className="text-xl font-bold">{talk.vote_count}</span>
-                  <span className="block text-xs text-ink-faint">votes</span>
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

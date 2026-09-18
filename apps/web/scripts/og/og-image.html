@@ -3,7 +3,8 @@
   Source for the social share card. Rendered to apps/web/public/og-image.png by
   scripts/og/render-og.mjs (headless Chrome -> sharp). Edit here, then re-run:
       node apps/web/scripts/og/render-og.mjs
-  Same tokens as the site: grey ground, white card, one black panel, Inter.
+  Same tokens as the site: grey ground, white card, one black panel with the
+  festival's maze motif, Inter.
 -->
 <html lang="en">
   <head>
@@ -23,7 +24,7 @@
         overflow: hidden;
         background: #f0f0f0;
         font-family: 'Inter', system-ui, sans-serif;
-        color: #161616;
+        color: #1a1a1a;
       }
 
       .frame { display: flex; gap: 24px; width: 1200px; height: 630px; padding: 48px; }
@@ -33,32 +34,30 @@
         display: flex;
         flex-direction: column;
         background: #ffffff;
-        border: 1px solid rgba(22, 22, 22, 0.1);
+        border: 1px solid rgba(26, 26, 26, 0.1);
         border-radius: 22px;
-        padding: 52px 56px;
+        padding: 48px 56px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -10px rgba(0, 0, 0, 0.12);
       }
 
-      .eyebrow {
-        font-size: 15px;
-        font-weight: 500;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: #6b6b6b;
-      }
+      .lockup { display: flex; align-items: center; gap: 14px; }
+      .lockup .wordmark { height: 30px; width: auto; }
+      .lockup .rule { width: 1px; height: 22px; background: rgba(26, 26, 26, 0.18); }
+      .lockup .name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 
       h1 {
-        margin-top: 20px;
-        font-size: 68px;
+        margin-top: 26px;
+        font-size: 56px;
         font-weight: 700;
-        line-height: 1.04;
-        letter-spacing: -0.028em;
+        line-height: 1.06;
+        letter-spacing: -0.04em;
+        max-width: 15ch;
       }
 
       .tagline {
-        margin-top: 22px;
-        max-width: 30ch;
-        font-size: 23px;
+        margin-top: 20px;
+        max-width: 34ch;
+        font-size: 22px;
         line-height: 1.45;
         color: #4a4a4a;
       }
@@ -72,62 +71,104 @@
         color: #6b6b6b;
       }
       .dot { width: 5px; height: 5px; border-radius: 50%; background: #c4c4c4; }
+      .foot .hall { color: #1a1a1a; font-weight: 600; }
 
-      /* The one dark panel, as on the site. */
+      /* The one dark panel, as on the site - maze motif and all. */
       .panel {
+        position: relative;
+        overflow: hidden;
         width: 336px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        background: #161616;
+        background: #1a1a1a;
         color: #ffffff;
         border-radius: 22px;
         padding: 48px 40px;
       }
+      .panel .maze {
+        position: absolute;
+        inset: 0;
+        background-color: #08B54D;
+        opacity: 0.3;
+        -webkit-mask-image: url('../../public/images/indiafoss-maze.webp');
+        mask-image: url('../../public/images/indiafoss-maze.webp');
+        -webkit-mask-size: cover;
+        mask-size: cover;
+        -webkit-mask-position: center bottom;
+        mask-position: center bottom;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+      }
+      .panel > *:not(.maze) { position: relative; }
       .panel .label {
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         letter-spacing: 0.09em;
         text-transform: uppercase;
         color: rgba(255, 255, 255, 0.55);
       }
       .panel .big {
-        margin-top: 14px;
+        margin-top: 12px;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 74px;
+        font-size: 96px;
         font-weight: 600;
         line-height: 1;
+        color: #08B54D;
       }
-      .panel .sub { margin-top: 10px; font-size: 19px; color: rgba(255, 255, 255, 0.7); }
+      .panel .sub { margin-top: 10px; font-size: 19px; color: rgba(255, 255, 255, 0.72); }
       .mark {
-        margin-top: 44px;
-        padding-top: 26px;
+        margin-top: 40px;
+        padding-top: 24px;
         border-top: 1px solid rgba(255, 255, 255, 0.16);
-        font-size: 17px;
-        color: rgba(255, 255, 255, 0.75);
+        font-size: 16px;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.7);
       }
     </style>
   </head>
   <body>
     <div class="frame">
       <div class="card">
-        <span class="eyebrow">IndiaFOSS 2026 · Bengaluru</span>
-        <h1>Community<br />Con</h1>
+        <div class="lockup">
+          <svg color="#1A1A1A" class="wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="108 37 223 80" fill="none">
+  <path d="M169.256 81.1375H175.295V63.2279H169.256V81.1375ZM162.869 87.3596V57.031H178.589V60.0412H181.7V84.3158H178.589V87.3512H162.869V87.3596Z" fill="currentColor"/>
+  <path d="M135.897 57.031H129.11V87.2334H135.897V57.031Z" fill="currentColor"/>
+  <path d="M192.544 57.031H185.757V87.2335H192.544V57.031Z" fill="currentColor"/>
+  <path d="M146.359 87.3512H139.964V57.031H158.785V87.3512H152.39V63.2279H146.35V87.3512H146.359Z" fill="currentColor"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M196.611 87.3512H202.998V75.2938H209.037V87.3512H215.424V57.031H196.602V87.3512H196.611ZM209.046 68.7269V63.2279H203.006V68.7269H209.046Z" fill="currentColor"/>
+  <path d="M233.959 87.3512H227.554V57.031H243.3V63.2279H233.959V69.0885H243.3V75.2853H233.959V87.3596V87.3512Z" fill="currentColor"/>
+  <path d="M246.654 57.031V87.3512H265.511V57.031H246.654ZM259.106 81.1375H253.05V63.2279H259.106V81.1375Z" fill="currentColor"/>
+  <path d="M287.35 63.2279V57.031L272.426 57.031H269.306V60.0412V75.2769H281.225V81.1375H269.035V87.3512H284.51H287.621V84.3158V69.08H275.71V63.2279H287.35Z" fill="currentColor"/>
+  <path d="M309.47 63.2279V57.031L294.537 57.031H291.426V60.0412V75.2769H303.337V81.1375H291.155V87.3512H306.63H309.741V84.3158V69.08H297.83V63.2279H309.47Z" fill="currentColor"/>
+  <path d="M325 43V101.283H310.16V94.807H318.524V49.4759H120.476V94.807H251.073V101.283H114V43H325Z" fill="currentColor"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M305.472 97.1853H299.086V99.4161H306.163V110.753H294.636V93.122H305.472V97.1853ZM299.086 106.69H301.713V103.479H299.086V106.69Z" fill="currentColor"/>
+  <path d="M266.543 104.556H259.868V106.69H266.737V110.753H255.418V100.493H262.093V97.1853H255.708V93.122H266.543V104.556Z" fill="currentColor"/>
+  <path d="M292.625 104.556H285.949V106.69H292.818V110.753H281.499V100.493H288.174V97.1853H281.789V93.122H292.625V104.556Z" fill="currentColor"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M279.681 110.753H268.555V93.122H279.681V110.753ZM273.005 106.69H275.23V97.1853H273.005V106.69Z" fill="currentColor"/>
+  </svg>
+          <span class="rule"></span>
+          <span class="name">Communi-Con</span>
+        </div>
+        <h1>Everyone has a shot at a 10 minute slot on our biggest stage.</h1>
         <p class="tagline">
-          The flash lightning-talk lineup, chosen by the people in the room.
+          Community members propose. Ticket-holders vote. Seven take the main stage.
         </p>
         <div class="foot">
-          <span>Propose on day one</span>
+          <span class="hall">Hall 1</span>
           <span class="dot"></span>
-          <span>Vote with your ticket</span>
+          <span>27 September 2026</span>
+          <span class="dot"></span>
+          <span>NIMHANS, Bengaluru</span>
         </div>
       </div>
 
       <div class="panel">
+        <span class="maze"></span>
         <span class="label">Talks on stage</span>
-        <span class="big">6</span>
-        <span class="sub">picked by ticket-holders</span>
-        <div class="mark">FOSS United</div>
+        <span class="big">7</span>
+        <span class="sub">10 minutes each, picked by the room</span>
+        <div class="mark">IndiaFOSS 2026<br />FOSS United</div>
       </div>
     </div>
   </body>

@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getVotingStatus } from '@cc/db'
 import { setAdminMode, useAdminMode } from '../lib/admin.js'
 import { getStore, mutate, resetDemo } from '../mock/store.js'
+import { SCHEDULE } from '../lib/event.js'
 
 /**
  * Demo controls.
@@ -15,7 +16,7 @@ import { getStore, mutate, resetDemo } from '../mock/store.js'
  * because half of these transitions are things the real API correctly refuses.
  */
 
-type VotingState = 'before' | 'open' | 'closed'
+type VotingState = 'before' | 'open' | 'closed' | 'real'
 
 const HOUR = 60 * 60 * 1000
 
@@ -29,12 +30,18 @@ export default function DemoBar() {
 
   async function refresh() {
     const store = await getStore()
-    const status = getVotingStatus(store.conference)
+    const conf = store.conference
+    const status = getVotingStatus(conf)
+    const onRealSchedule =
+      conf.voting_opens_at === SCHEDULE.votingOpensAt &&
+      conf.voting_closes_at === SCHEDULE.votingClosesAt
     const before =
       status === 'closed' &&
-      store.conference.voting_opens_at !== null &&
-      Date.now() < store.conference.voting_opens_at
-    setState(before ? 'before' : status === 'open' ? 'open' : 'closed')
+      conf.voting_opens_at !== null &&
+      Date.now() < conf.voting_opens_at
+    setState(
+      onRealSchedule ? 'real' : before ? 'before' : status === 'open' ? 'open' : 'closed'
+    )
     setPublished(store.conference.results_public === 1)
     setBallotCount(store.ballots.length)
   }
@@ -48,7 +55,13 @@ export default function DemoBar() {
     await mutate(store => {
       const conf = store.conference
       conf.voting_force_status = 'scheduled'
-      if (next === 'before') {
+      if (next === 'real') {
+        // Back to the published IF26 schedule - the one the site is telling
+        // everyone else. Everything above this is a fiction for demoing.
+        conf.voting_opens_at = SCHEDULE.votingOpensAt
+        conf.voting_closes_at = SCHEDULE.votingClosesAt
+        conf.results_public = 0
+      } else if (next === 'before') {
         conf.voting_opens_at = now + 3 * HOUR
         conf.voting_closes_at = now + 23 * HOUR
         conf.results_public = 0
@@ -126,7 +139,7 @@ export default function DemoBar() {
       </p>
 
       <div className="mt-3">
-        <p className="ui-label mb-1.5">Voting</p>
+        <p className="ui-label mb-1.5">Pretend voting is…</p>
         <div className="flex gap-1">
           {(['before', 'open', 'closed'] as const).map(option => (
             <button
@@ -143,6 +156,17 @@ export default function DemoBar() {
             </button>
           ))}
         </div>
+        <button
+          onClick={() => applyVotingState('real')}
+          className={[
+            'mt-1.5 w-full rounded-md border px-2 py-1.5 text-[0.7rem] font-medium transition-colors',
+            state === 'real'
+              ? 'border-ink bg-ink text-surface'
+              : 'border-line text-ink-faint hover:border-ink/30 hover:text-ink',
+          ].join(' ')}
+        >
+          Real IF26 schedule
+        </button>
       </div>
 
       <div className="mt-3 space-y-2 border-t border-line pt-3">

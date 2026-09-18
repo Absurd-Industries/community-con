@@ -1,5 +1,6 @@
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
 import { useAdminMode } from './lib/admin.js'
+import { EVENT } from './lib/event.js'
 import DemoBar from './components/DemoBar.js'
 import LandingPage from './pages/LandingPage.js'
 import VotePage from './pages/VotePage.js'
@@ -16,20 +17,32 @@ const ADMIN_NAV = [
   { to: '/admin/tally', label: 'Tally' },
 ]
 
+/**
+ * The lockup: the real IndiaFOSS 2026 wordmark, then the event name.
+ *
+ * The mark is the festival's own artwork (extracted from the IndiaFOSS speaker
+ * poster generator), not an approximation - a voter arriving from a link in a
+ * Telegram group should be able to tell at a glance that this is really FOSS
+ * United and not someone harvesting ticket IDs.
+ */
 function Wordmark() {
   return (
     <Link
       to="/"
-      className="flex shrink-0 items-center gap-2 font-sans text-[0.95rem] font-bold tracking-tight text-ink"
-      aria-label="Community Con home"
+      className="flex shrink-0 items-center gap-2.5"
+      aria-label={`${EVENT.name} home`}
     >
-      <span
-        aria-hidden="true"
-        className="grid h-6 w-6 place-items-center rounded-md bg-ink text-[0.7rem] text-surface"
-      >
-        <i className="ph-bold ph-check" />
+      <img
+        src="/images/indiafoss-wordmark.svg"
+        alt={EVENT.conference}
+        className="h-5 w-auto"
+        width={56}
+        height={20}
+      />
+      <span aria-hidden="true" className="h-4 w-px bg-line" />
+      <span className="font-sans text-[0.95rem] font-bold tracking-tight text-ink">
+        {EVENT.name}
       </span>
-      Community Con
     </Link>
   )
 }

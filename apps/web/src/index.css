@@ -3,15 +3,25 @@
 @tailwind utilities;
 
 /* =========================================================================
-   Community Con design system.
+   Communi-Con, wearing IndiaFOSS 2026.
 
-   Light grey ground, white cards, one near-black feature panel. A single
-   sans face at several weights. Interaction is ink (#161616) - hover lifts
-   with shadow, not hue. Colour is reserved for state: green for open/chosen,
-   red for errors. Nothing here is textured or decorative.
+   Light grey ground, white cards, one near-black feature panel, green
+   (#08B54D) for anything you can click. Type is Inter, tight tracking at
+   display sizes, exactly as on the IndiaFOSS posters.
 
-   Class names are shared with every page, so a page inherits the theme
-   without being touched. Change tokens in tailwind.config.js, not here.
+   Track colours are a separate nine-colour set and appear on proposals
+   (src/lib/track-colors.ts), so the ballot looks like the many communities it
+   came from. Keeping interaction outside that set means a green button is
+   never mistaken for a track.
+
+   Green buttons take WHITE labels. Worth knowing: white on #08B54D is 2.72:1,
+   under the 4.5:1 WCAG AA wants for label-sized text. Hover deepens to #06883A
+   (4.57:1), so the state you are actually pointing at does clear it. If the
+   rest state needs to clear it too, swap `accent.DEFAULT` for `accent.strong`
+   in `.btn-primary` below; nothing else has to change.
+
+   Class names are shared with every page, so a page inherits the theme without
+   being touched. Change tokens in tailwind.config.js, not here.
    ========================================================================= */
 
 @layer base {
@@ -34,23 +44,49 @@
   }
   h1, h2, h3, h4 {
     @apply font-sans font-bold;
-    letter-spacing: -0.018em;
+    letter-spacing: -0.022em;
   }
   *:focus-visible {
-    outline: 2px solid #161616;
+    outline: 2px solid theme('colors.accent.DEFAULT');
     outline-offset: 2px;
   }
   ::selection {
-    background-color: #161616;
+    background-color: theme('colors.accent.DEFAULT');
     color: #ffffff;
   }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(22, 22, 22, 0.18); border-radius: 5px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(22, 22, 22, 0.32); }
+  ::-webkit-scrollbar-thumb { background: rgba(26, 26, 26, 0.18); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(26, 26, 26, 0.32); }
 }
 
 @layer components {
+  /* ---- The festival's maze motif ---------------------------------------
+     The artwork is an alpha mask, so it can take any track colour rather than
+     being locked to coral. `currentColor` fills it; the element's text colour
+     decides the hue. Browsers without mask support simply show nothing, which
+     is the correct degradation for decoration.
+     --------------------------------------------------------------------- */
+  .maze {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: currentColor;
+    -webkit-mask-image: url('/images/indiafoss-maze.webp');
+    mask-image: url('/images/indiafoss-maze.webp');
+    -webkit-mask-size: cover;
+    mask-size: cover;
+    /* Anchored to the base, so the motif rises out of the panel edge the way
+       it does on the posters rather than floating in the middle of the text. */
+    -webkit-mask-position: center bottom;
+    mask-position: center bottom;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  @supports not (mask-image: url('/images/indiafoss-maze.webp')) {
+    .maze { display: none; }
+  }
+
   /* ---- Cards ------------------------------------------------------------ */
   .card,
   .ui-card {
@@ -61,11 +97,11 @@
   }
   .card-hover:hover {
     @apply shadow-lift;
-    border-color: rgba(22, 22, 22, 0.18);
+    border-color: rgba(26, 26, 26, 0.18);
   }
   /* The one solid dark panel - stats, countdowns, footers. */
   .card-ink {
-    @apply rounded-card bg-ink text-surface;
+    @apply relative overflow-hidden rounded-card bg-ink text-surface;
   }
   /* Kept as a hook for grid children; the layout lives in the page. */
   .card-grid { @apply items-stretch; }
@@ -89,9 +125,7 @@
       box-shadow 0.15s ease;
   }
   .btn:disabled,
-  .btn-primary:disabled,
   .btn-ink:disabled,
-  .btn-stamp:disabled,
   .btn-outline:disabled,
   .btn-label:disabled,
   .btn-ghost:disabled {
@@ -99,34 +133,60 @@
     cursor: not-allowed;
     box-shadow: none;
   }
+  /* A faded green button reads as a broken green button, and fading the label
+     with it drops the text below any usable contrast. Disabled primaries go
+     neutral instead: clearly "not yet", still legible. */
+  .btn-primary:disabled,
+  .btn-stamp:disabled {
+    background: rgba(26, 26, 26, 0.07);
+    color: rgba(26, 26, 26, 0.42);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
 
-  .btn-primary, .btn-ink, .btn-stamp {
-    background: #161616;
+  /* White on green. See the contrast note at the top of this file. */
+  .btn-primary, .btn-stamp {
+    background: theme('colors.accent.DEFAULT');
     color: #ffffff;
   }
   .btn-primary:hover:not(:disabled),
-  .btn-ink:hover:not(:disabled),
   .btn-stamp:hover:not(:disabled) {
+    background: theme('colors.accent.strong');
+    color: #ffffff;
+    box-shadow: theme('boxShadow.accent');
+  }
+
+  /* Ink remains available where coral would compete - inside dark panels,
+     or next to a coral primary. */
+  .btn-ink {
+    background: #1a1a1a;
+    color: #ffffff;
+  }
+  .btn-ink:hover:not(:disabled) {
     background: #000000;
     box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.35);
   }
 
   .btn-outline, .btn-label {
     background: #ffffff;
-    color: #161616;
-    border: 1px solid rgba(22, 22, 22, 0.16);
+    color: #1a1a1a;
+    border: 1px solid rgba(26, 26, 26, 0.16);
   }
   .btn-outline:hover:not(:disabled),
   .btn-label:hover:not(:disabled) {
-    border-color: rgba(22, 22, 22, 0.4);
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.12);
+    border-color: theme('colors.accent.DEFAULT');
+    color: theme('colors.accent.ink');
+    box-shadow: 0 2px 8px -2px rgba(6, 129, 55, 0.25);
   }
 
   .btn-ghost {
     background: transparent;
     color: #4a4a4a;
   }
-  .btn-ghost:hover:not(:disabled) { background: rgba(22, 22, 22, 0.05); color: #161616; }
+  .btn-ghost:hover:not(:disabled) {
+    background: theme('colors.accent.soft');
+    color: theme('colors.accent.ink');
+  }
 
   .btn-sm { padding: 0.45rem 0.95rem; font-size: 0.8125rem; }
 
@@ -141,20 +201,31 @@
   .card-ink .btn-label:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.18);
     border-color: rgba(255, 255, 255, 0.32);
+    color: #ffffff;
   }
 
   /* ---- Tags / pills ----------------------------------------------------- */
+  /* IndiaFOSS poster geometry: uppercase, bold, wide tracking. */
   .tag {
-    @apply inline-flex items-center font-sans font-medium;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    letter-spacing: 0.01em;
+    @apply inline-flex items-center font-sans font-bold uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: theme('borderRadius.pill');
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
     white-space: nowrap;
+    line-height: 1.15rem;
   }
-  .tag-default { background: rgba(22, 22, 22, 0.06); color: #4a4a4a; }
-  .tag-muted   { background: rgba(22, 22, 22, 0.06); color: #6b6b6b; }
-  .tag-stamp   { background: #161616; color: #ffffff; }
+  /* Two pills meeting form one segmented unit, as on the posters: round on the
+     outside, tighter where they touch. */
+  .tag-group { @apply inline-flex items-center gap-px; }
+  .tag-group > .tag:first-child { border-radius: 14px 8px 8px 14px; }
+  .tag-group > .tag:last-child { border-radius: 8px 14px 14px 8px; }
+  .tag-group > .tag:only-child { border-radius: theme('borderRadius.pill'); }
+
+  .tag-default { background: rgba(26, 26, 26, 0.06); color: #4a4a4a; }
+  .tag-muted   { background: rgba(26, 26, 26, 0.06); color: #6b6b6b; }
+  .tag-stamp   { background: theme('colors.accent.DEFAULT'); color: #ffffff; }
+  .tag-ink     { background: #1a1a1a; color: #ffffff; }
   .tag-funded  { background: theme('colors.positive.soft'); color: #0f7a4e; }
   .tag-danger  { background: theme('colors.danger.soft'); color: #c22c2c; }
 
@@ -163,24 +234,25 @@
     @apply w-full rounded-control bg-surface font-sans text-ink;
     padding: 0.6rem 0.85rem;
     font-size: 0.875rem;
-    border: 1px solid rgba(22, 22, 22, 0.16);
+    border: 1px solid rgba(26, 26, 26, 0.16);
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   .ui-input::placeholder { color: #9a9a9a; }
   .ui-input:focus {
     outline: none;
-    border-color: #161616;
-    box-shadow: 0 0 0 3px rgba(22, 22, 22, 0.08);
+    border-color: theme('colors.accent.DEFAULT');
+    box-shadow: 0 0 0 3px theme('colors.accent.soft');
   }
   .ui-label {
-    @apply mb-1.5 block font-sans font-medium text-ink-light;
-    font-size: 0.8125rem;
+    @apply mb-1.5 block font-sans font-semibold uppercase text-ink-light;
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
   }
 
   /* ---- Typographic helpers --------------------------------------------- */
   .supertitle,
   .eyebrow {
-    @apply inline-flex items-center gap-1.5 font-sans font-medium uppercase text-ink-faint;
+    @apply inline-flex items-center gap-1.5 font-sans font-semibold uppercase text-ink-faint;
     font-size: 0.6875rem;
     letter-spacing: 0.08em;
   }
@@ -188,12 +260,13 @@
     @apply font-sans font-bold text-ink;
     font-size: 1.75rem;
     line-height: 1.15;
-    letter-spacing: -0.022em;
+    /* The posters set display type at -0.04em. */
+    letter-spacing: -0.035em;
   }
   .section-title {
     @apply font-sans font-bold text-ink;
     font-size: 1.125rem;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
   }
 
   /* ---- Status blocks ---------------------------------------------------- */
@@ -219,40 +292,39 @@
     @apply w-full text-sm;
     border-collapse: collapse;
   }
-  .data-table thead tr { border-bottom: 1px solid rgba(22, 22, 22, 0.12); }
+  .data-table thead tr { border-bottom: 1px solid rgba(26, 26, 26, 0.12); }
   .data-table th {
-    @apply px-4 py-2.5 text-left font-sans font-medium uppercase text-ink-faint;
+    @apply px-4 py-2.5 text-left font-sans font-semibold uppercase text-ink-faint;
     font-size: 0.6875rem;
     letter-spacing: 0.06em;
   }
-  .data-table td { @apply px-4 py-3; border-bottom: 1px solid rgba(22, 22, 22, 0.06); }
+  .data-table td { @apply px-4 py-3; border-bottom: 1px solid rgba(26, 26, 26, 0.06); }
   .data-table tbody tr:last-child td { border-bottom: none; }
   .data-table tbody tr { transition: background 0.12s; }
-  .data-table tbody tr:hover { background: rgba(22, 22, 22, 0.025); }
+  .data-table tbody tr:hover { background: theme('colors.accent.soft'); }
 
   /* ---- Progress --------------------------------------------------------- */
   .progress {
     height: 6px;
-    background: rgba(22, 22, 22, 0.08);
+    background: rgba(26, 26, 26, 0.08);
     border-radius: 999px;
     overflow: hidden;
   }
   .progress-fill {
     height: 100%;
     border-radius: 999px;
-    background: #161616;
+    background: theme('colors.accent.DEFAULT');
     transition: width 0.4s ease;
   }
-  /* Legacy alias - the old theme turned the bar orange when nearly full. */
-  .progress-fill.hot { background: #161616; }
+  .progress-fill.hot { background: theme('colors.accent.strong'); }
   .card-ink .progress { background: rgba(255, 255, 255, 0.16); }
-  .card-ink .progress-fill { background: #ffffff; }
+  .card-ink .progress-fill { background: theme('colors.accent.DEFAULT'); }
 
   /* ---- Misc ------------------------------------------------------------- */
   .empty-state {
     @apply flex flex-col items-center gap-2 rounded-card text-center text-ink-faint;
     padding: 3rem 2rem;
-    border: 1px dashed rgba(22, 22, 22, 0.16);
+    border: 1px dashed rgba(26, 26, 26, 0.16);
     background: rgba(255, 255, 255, 0.5);
   }
   .nav-link {
@@ -261,8 +333,8 @@
     font-size: 0.875rem;
     transition: color 0.15s, background 0.15s;
   }
-  .nav-link:hover { color: #161616; background: rgba(22, 22, 22, 0.05); }
-  .nav-link-active { color: #161616; background: rgba(22, 22, 22, 0.07); }
+  .nav-link:hover { color: theme('colors.accent.ink'); background: theme('colors.accent.soft'); }
+  .nav-link-active { color: theme('colors.accent.ink'); background: theme('colors.accent.soft'); }
 
   /* Scrollable rows that should not paint a scrollbar (mobile nav, carousels) */
   .scrollbar-hide {
@@ -274,7 +346,7 @@
   /* The global prefers-reduced-motion rule stops the pulse for users who
      ask for less motion. */
   .skeleton {
-    background: rgba(22, 22, 22, 0.07);
+    background: rgba(26, 26, 26, 0.07);
     border-radius: 0.5rem;
     animation: skeleton-pulse 1.4s ease-in-out infinite;
   }
@@ -292,7 +364,7 @@
     transition: transform 0.2s ease;
     transform: translateY(-3px);
   }
-  .faq-item summary:hover { color: #000000; }
+  .faq-item summary:hover { color: theme('colors.accent.ink'); }
   .faq-item[open] summary::after { transform: rotate(180deg) translateY(-4px); }
   .faq-item > p { @apply pb-4 text-sm leading-relaxed text-ink-light; }
 
@@ -315,7 +387,10 @@
   .ui-prose p { @apply mb-3; }
   .ui-prose ul, .ui-prose ol { @apply mb-3 ml-5 list-disc space-y-1; }
   .ui-prose ol { @apply list-decimal; }
-  .ui-prose a { @apply font-medium text-ink underline underline-offset-2 hover:text-black; }
+  .ui-prose a {
+    @apply font-medium underline underline-offset-2;
+    color: theme('colors.accent.ink');
+  }
   .ui-prose strong { @apply font-semibold text-ink; }
   .ui-prose code {
     @apply rounded bg-surface-sunken px-1 py-0.5 font-mono text-xs text-ink;
@@ -324,7 +399,7 @@
   /* ---- Modal ------------------------------------------------------------ */
   .modal-backdrop {
     @apply fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center;
-    background: rgba(22, 22, 22, 0.35);
+    background: rgba(26, 26, 26, 0.35);
     backdrop-filter: blur(4px);
   }
   .modal-panel {
@@ -352,7 +427,7 @@
 .animate-vote-pulse { animation: none; }
 
 @media (min-width: 640px) {
-  .page-title { font-size: 2.125rem; }
+  .page-title { font-size: 2.125rem; letter-spacing: -0.04em; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { maskTicket, sha256Hex } from './hash.js'
+import { maskEmail, maskTicket, voterIdHash } from './hash.js'
 
 /**
  * The voter's identity for this session.
  *
- * Only the hash and a masked label are kept. The raw ticket ID exists in memory
- * for exactly as long as it takes to hash it, which is the property the backend
- * team will want to preserve: a leaked ballot store must not be a list of who
- * attended.
+ * Only the hash and two masked labels are kept. The raw ticket ID and email
+ * exist in memory for exactly as long as it takes to hash them, which is the
+ * property the backend team will want to preserve: a leaked ballot store must
+ * not be a list of who attended, or of how to reach them.
  */
 
 const KEY = 'community-con:ticket'
@@ -15,6 +15,7 @@ const KEY = 'community-con:ticket'
 export interface TicketSession {
   hash: string
   masked: string
+  maskedEmail: string
 }
 
 function read(): TicketSession | null {
@@ -39,8 +40,12 @@ export function useTicket() {
     setReady(true)
   }, [])
 
-  const signIn = useCallback(async (raw: string) => {
-    const session: TicketSession = { hash: await sha256Hex(raw), masked: maskTicket(raw) }
+  const signIn = useCallback(async (rawTicket: string, rawEmail: string) => {
+    const session: TicketSession = {
+      hash: await voterIdHash(rawTicket, rawEmail),
+      masked: maskTicket(rawTicket),
+      maskedEmail: maskEmail(rawEmail),
+    }
     try {
       window.sessionStorage.setItem(KEY, JSON.stringify(session))
     } catch {

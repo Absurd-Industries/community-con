@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { formatDateTime } from '../lib/time.js'
 
 /**
  * Confirmation after a ballot is submitted.
@@ -8,10 +9,13 @@ import { useEffect } from 'react'
  */
 export default function VoteCompleteModal({
   votesTotal,
+  castAt,
   deadline,
   onClose,
 }: {
   votesTotal: number
+  /** When this ballot was recorded. Every ballot is stamped; show it. */
+  castAt: number | null
   deadline: string | null
   onClose: () => void
 }) {
@@ -27,6 +31,8 @@ export default function VoteCompleteModal({
     }
   }, [onClose])
 
+  const stamped = formatDateTime(castAt)
+
   return (
     <div
       className="modal-backdrop"
@@ -40,11 +46,14 @@ export default function VoteCompleteModal({
           <i className="ph-fill ph-check-circle text-5xl text-positive" aria-hidden="true" />
           <h2 className="mt-3 text-2xl font-bold text-ink">Ballot submitted</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-light">
-            {votesTotal} {votesTotal === 1 ? 'talk' : 'talks'} recorded against your ticket.
+            {votesTotal} {votesTotal === 1 ? 'talk' : 'talks'} recorded. Thank you!
           </p>
+          {stamped && (
+            <p className="mt-1 font-mono text-xs text-ink-faint">Timestamped {stamped}</p>
+          )}
           <p className="mt-4 rounded-control border border-line bg-surface-sunken px-4 py-3 text-sm text-ink">
-            Change your mind {deadline ? `before ${deadline}` : 'before voting closes'} and just
-            submit again — only your last ballot is counted.
+            Changed your mind? Submit again {deadline ? `before ${deadline}` : 'before voting closes'}.
+            Only your last ballot counts.
           </p>
 
           <button onClick={onClose} className="btn-primary mt-6 w-full">

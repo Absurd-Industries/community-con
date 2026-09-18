@@ -238,7 +238,7 @@ export default function ResultsPage() {
           {(data?.tie_breaks ?? []).map(decision => (
             <p key={decision.id} className="text-xs text-ink-faint">
               Selected {talks.find(talk => talk.id === decision.selected_talk_id)?.title ?? decision.selected_talk_id}: {decision.reason}
-              {decision.admin_email ? ` — ${decision.admin_email}` : ''}
+              {decision.admin_email ? `, ${decision.admin_email}` : ''}
             </p>
           ))}
         </div>

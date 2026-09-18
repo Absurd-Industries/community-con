@@ -1,7 +1,18 @@
-<!-- Placeholder mark: a ballot check. Swap when FOSS United supplies artwork. -->
+<!-- The IndiaFOSS 2026 mark on Communi-Con's interaction green. Extracted
+     from the IndiaFOSS speaker poster generator; recoloured for favicon use. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="14" fill="#161616"/>
-  <path d="M17 33.5 L27.5 44 L47 22"
-        fill="none" stroke="#ffffff" stroke-width="7"
-        stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="64" height="64" rx="14" fill="#08B54D"/>
+  <g transform="translate(6.4 10.4) scale(0.711)">
+    <path d="M13.35 28.45H9.14V7.84h10.36v4.21h-6.14v3.98h6.14v4.21h-6.14v8.21Z" fill="#FFFFFF"/>
+    <path d="M25.64 24.23h3.98V12.05h-3.98v12.18Zm-2.16 4.23v-2.07h-2.05V9.89h2.05V7.84h8.31v2.05h2.05v16.5h-2.05v2.06h-8.31Zm-1.93-20.54h1.93v1.98h-1.93v-1.98Zm10.24-.07h2.05v2.05h-2.05V7.84Zm0 18.55h2.05v2h-2.05v-2Zm-10.36 0h2.05v2.06h-2.05v-2.06Z" fill="#FFFFFF"/>
+    <path d="M46.12 28.45H35.76v-4.22h8.2v-3.98h-6.15v-2.05h-2.05V9.89h2.05V7.84h10.36v4.21h-8.19v3.98h6.14v2.05h2.05v8.31h-2.05v2.05Zm-10.24-20.54h1.93v1.98h-1.93v-1.98Zm-.11 10.29h2.05v2.05h-2.05v-2.05Zm10.35-2.16h2.05v2.05h-2.05v-2.05Zm0 10.35h2.05v2h-2.05v-2Z" fill="#FFFFFF"/>
+    <path d="M60.46 28.45H50.1v-4.22h8.19v-3.98H52.15v-2.05H50.1V9.89h2.05V7.84h10.36v4.21h-8.19v3.98h6.14v2.05h2.05v8.31h-2.05v2.05Zm-10.24-20.54h1.93v1.98h-1.93v-1.98Zm-.12 10.29h2.05v2.05h-2.05v-2.05Zm10.36-2.16h2.05v2.05h-2.05v-2.05Zm0 10.35h2.05v2h-2.05v-2Z" fill="#FFFFFF"/>
+    <path d="M10.62 47.28v-1.49H9.14V32.36h3.04v11.86h2.88V32.36h3.04v13.43h-1.48v1.49h-5.99ZM9.14 45.79h1.48v1.49H9.14v-1.49Zm7.48 0h1.48v1.44h-1.48v-1.44Z" fill="#FFFFFF"/>
+    <path d="M22.54 47.28h-3.04V32.36h8.96v14.92h-3.04V35.41h-2.88v11.87Z" fill="#FFFFFF"/>
+    <path d="M32.91 47.28h-3.04V32.36h3.04v14.92Z" fill="#FFFFFF"/>
+    <path d="M40.31 47.28h-3.04V35.41h-2.96v-3.05h8.96v3.05h-2.96v11.87Z" fill="#FFFFFF"/>
+    <path d="M52.15 47.28h-7.48V32.36h7.48v3.05H47.7v2.88h4.44v3.05H47.7v2.88h4.44v3.06Z" fill="#FFFFFF"/>
+    <path d="M56.58 44.22h2.88V35.41h-2.88v8.81Zm-3.04 3.06V32.36h7.48v1.48h1.48v11.94h-1.48v1.49h-7.48Z" fill="#FFFFFF"/>
+    <path d="M.5 0h70.64v55.13H.5V0Zm2.75 2.75v49.62h65.14V2.75H3.25Z" fill="#FFFFFF"/>
+  </g>
 </svg>
