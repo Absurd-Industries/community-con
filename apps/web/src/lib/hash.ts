@@ -43,8 +43,8 @@ export async function sha256Hex(input: string): Promise<string> {
  *
  *     voter_hash = SHA256_hex( upper(trim(ticket)) + "+" + lower(trim(email)) )
  *
- *     ("  if26-4821 ", "Ashwin@Example.COM ")
- *       -> "IF26-4821+ashwin@example.com"
+ *     ("  k7m2p9 ", "Ashwin@Example.COM ")
+ *       -> "K7M2P9+ashwin@example.com"
  *       -> "c1f0…"
  *
  * The normalisation is not cosmetic. Someone who types `Ashwin@Gmail.com` on
@@ -52,7 +52,7 @@ export async function sha256Hex(input: string): Promise<string> {
  * otherwise their first ballot is never superseded and both get counted.
  *
  * Uppercase the ticket, lowercase the email. The literal "+" separates them so
- * that ("IF26-1", "2a@x.com") and ("IF26-12", "a@x.com") cannot collide.
+ * that ("k7m2p", "9a@x.com") and ("k7m2p9", "a@x.com") cannot collide.
  * ---------------------------------------------------------------------------
  */
 export async function voterIdHash(ticket: string, email: string): Promise<string> {
@@ -81,11 +81,17 @@ function insecureFallbackHash(value: string): string {
   }).join('')
 }
 
-/** `IF26-4821` -> `IF26…21`. Safe to show back to the voter. */
+/**
+ * `k7m2p9` -> `••••p9`. Safe to show back to the voter.
+ *
+ * Only ever the last two characters. The old first-four-plus-last-two scheme
+ * printed a six-character ticket in full, in the ballot header, for anyone
+ * looking over the voter's shoulder.
+ */
 export function maskTicket(raw: string): string {
   const value = raw.trim()
-  if (value.length <= 4) return '•'.repeat(value.length)
-  return `${value.slice(0, 4)}…${value.slice(-2)}`
+  if (value.length <= 2) return '••••'
+  return `••••${value.slice(-2)}`
 }
 
 /**

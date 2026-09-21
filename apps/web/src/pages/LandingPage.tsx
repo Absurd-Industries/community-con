@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../lib/api.js'
 import { formatDuration } from '../lib/time.js'
-import { EVENT, SCHEDULE, formatIst, formatIstDayTime, formatIstTime } from '../lib/event.js'
+import { EVENT, SCHEDULE, formatIst, formatIstTime } from '../lib/event.js'
 import { useEffect, useState } from 'react'
 
 interface Conference {
@@ -25,10 +25,9 @@ function useNow() {
   return now
 }
 
-function Step({ index, title, when, children }: {
+function Step({ index, title, children }: {
   index: number
   title: string
-  when: string
   children: React.ReactNode
 }) {
   return (
@@ -41,12 +40,13 @@ function Step({ index, title, when, children }: {
       </span>
       <div className="min-w-0">
         <h3 className="text-[0.95rem] font-bold text-ink">{title}</h3>
-        <p className="mt-0.5 font-mono text-xs text-ink-faint">{when}</p>
-        <div className="mt-2 text-sm leading-relaxed text-ink-light">{children}</div>
+        <div className="mt-1.5 text-sm leading-relaxed text-ink-light">{children}</div>
       </div>
     </li>
   )
 }
+
+const offsite = 'underline underline-offset-2 hover:text-ink'
 
 export default function LandingPage() {
   const now = useNow()
@@ -61,46 +61,53 @@ export default function LandingPage() {
   const showCountdown = target != null && target > now + offset
   const slots = conference?.votes_per_voter ?? EVENT.slotCount
 
+  /**
+   * Mirrors the list on the official Communi-Con page, and says so. Showing
+   * the event's schedule unattributed is part of what made this site read like
+   * a copy of that page rather than a tool for it.
+   */
+  const keyTimes: Array<{ label: string; when: string; extra?: React.ReactNode }> = [
+    {
+      label: 'Proposals close',
+      when: formatIst(SCHEDULE.cfpClosesAt),
+      extra: (
+        <a href={EVENT.links.submit} target="_blank" rel="noreferrer" className={offsite}>
+          Submit a proposal
+        </a>
+      ),
+    },
+    { label: 'Voting opens', when: formatIst(SCHEDULE.votingOpensAt) },
+    { label: 'Voting closes', when: formatIst(SCHEDULE.votingClosesAt) },
+    { label: 'Results', when: formatIst(SCHEDULE.resultsAt) },
+    {
+      label: 'On stage',
+      when: `${formatIst(SCHEDULE.stageStartsAt)} to ${formatIstTime(SCHEDULE.stageEndsAt)}`,
+      extra: EVENT.hall,
+    },
+  ]
+
   return (
     <div className="space-y-10">
-      {/* Hero */}
+      {/* Hero: say what this site is before anything else. */}
       <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="card p-7 sm:p-9">
-
-          <h1 className="page-title mt-3 max-w-xl">{EVENT.tagline}</h1>
-          <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
-            Propose a talk. Vote for the ones you want to see. The {slots} favourites go up
-            in {EVENT.hall} in front of {EVENT.audience} people.
+          <p className="eyebrow">
+            {EVENT.conference} · {EVENT.name}
           </p>
-          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-5 text-sm">
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-ink-faint">Slots</dt>
-              <dd className="mt-0.5 font-semibold text-ink">{slots} talks</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-ink-faint">Each</dt>
-              <dd className="mt-0.5 font-semibold text-ink">
-                {EVENT.slotMinutes} minutes, no Q&amp;A
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-ink-faint">On stage</dt>
-              <dd className="mt-0.5 font-semibold text-ink">
-                {formatIst(SCHEDULE.stageStartsAt, { weekday: undefined })}
-              </dd>
-            </div>
-          </dl>
+          <h1 className="page-title mt-3 max-w-xl">
+            {/* nowrap: otherwise narrow screens break the name at its hyphen. */}
+            Vote for the <span className="whitespace-nowrap">{EVENT.name}</span> talks
+          </h1>
+          <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
+            {EVENT.conference} ticket holders pick the talks. The {slots} with the most votes go
+            on stage in {EVENT.hall}, {EVENT.slotMinutes} minutes each.
+          </p>
           <div className="mt-6 flex flex-wrap gap-2.5">
             <Link to="/vote" className="btn-primary">
               {isOpen ? 'Vote now' : 'Open the ballot'}
             </Link>
-            <a
-              href={EVENT.links.submit}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-outline"
-            >
-              Propose a talk
+            <a href={EVENT.links.event} target="_blank" rel="noreferrer" className="btn-outline">
+              Official event page
               <i className="ph ph-arrow-up-right" aria-hidden="true" />
             </a>
             {conference?.results_public && (
@@ -126,26 +133,39 @@ export default function LandingPage() {
                   : 'Closed'}
             </p>
           </div>
-          <dl className="relative mt-7 space-y-3 border-t border-white/15 pt-5 text-sm">
+          <dl className="relative mt-7 border-t border-white/15 pt-5 text-sm">
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-surface/60">Votes per ticket</dt>
               <dd className="font-mono font-semibold">{slots}</dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-surface/60">Voting closes</dt>
-              <dd className="text-right font-mono text-xs">
-                {formatIst(SCHEDULE.votingClosesAt)}
-              </dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-surface/60">Results</dt>
-              <dd className="text-right font-mono text-xs">
-                {formatIst(SCHEDULE.resultsAt)}
-              </dd>
-            </div>
           </dl>
-          <p className="relative mt-4 text-[0.7rem] leading-relaxed text-surface/50">
-            All times IST, at {EVENT.venue}.
+        </div>
+      </section>
+
+      {/* Key times, credited to where they came from. */}
+      <section>
+        <h2 className="section-title mb-4">Key times</h2>
+        <div className="card overflow-hidden">
+          <dl className="divide-y divide-line">
+            {keyTimes.map(row => (
+              <div
+                key={row.label}
+                className="flex flex-col gap-0.5 px-5 py-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+              >
+                <dt className="text-sm font-medium text-ink">{row.label}</dt>
+                <dd className="flex flex-wrap items-baseline gap-x-3 font-mono text-sm text-ink-light sm:justify-end">
+                  <span>{row.when}</span>
+                  {row.extra && <span className="font-sans text-ink-faint">{row.extra}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="border-t border-line bg-surface-raised px-5 py-3 text-xs text-ink-faint">
+            All times IST. From the{' '}
+            <a href={EVENT.links.event} target="_blank" rel="noreferrer" className={offsite}>
+              official {EVENT.name} page
+            </a>
+            .
           </p>
         </div>
       </section>
@@ -154,50 +174,17 @@ export default function LandingPage() {
       <section>
         <h2 className="section-title mb-4">How it works</h2>
         <ol className="grid gap-3 sm:grid-cols-3">
-          <Step
-            index={1}
-            title="Propose"
-            when={`Until ${formatIst(SCHEDULE.cfpClosesAt)}`}
-          >
-            <p>Anything you’re working on. {EVENT.slotMinutes} minutes, no slides required.</p>
-            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-              <a
-                href={EVENT.links.submit}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-ink underline underline-offset-2"
-              >
-                Submit a proposal
-              </a>
-              <a
-                href={EVENT.links.proposals}
-                target="_blank"
-                rel="noreferrer"
-                className="text-ink-faint underline underline-offset-2 hover:text-ink"
-              >
-                See what’s in
-              </a>
+          <Step index={1} title="Propose">
+            <p>Anything you’re working on, in {EVENT.slotMinutes} minutes.</p>
+          </Step>
+          <Step index={2} title="Vote">
+            <p>
+              Pick up to {slots} talks. Change your mind as often as you like; only your last
+              ballot counts.
             </p>
           </Step>
-          <Step
-            index={2}
-            title="Vote"
-            when={`${formatIstDayTime(SCHEDULE.votingOpensAt)} → ${formatIst(SCHEDULE.votingClosesAt)}`}
-          >
-            <p>
-              Pick up to {slots} talks. Change your mind as often as you like; only your
-              last ballot counts.
-            </p>
-          </Step>
-          <Step
-            index={3}
-            title="Watch"
-            when={`Results ${formatIstDayTime(SCHEDULE.resultsAt)} · stage ${formatIstDayTime(SCHEDULE.stageStartsAt)}`}
-          >
-            <p>
-              Results at {formatIstTime(SCHEDULE.resultsAt)}, then seven talks in{' '}
-              {EVENT.hall} at {formatIstTime(SCHEDULE.stageStartsAt)}.
-            </p>
+          <Step index={3} title="Watch">
+            <p>The {slots} most voted talks go on stage in {EVENT.hall}.</p>
           </Step>
         </ol>
       </section>
@@ -209,8 +196,8 @@ export default function LandingPage() {
           <details className="faq-item">
             <summary>Do I need a ticket?</summary>
             <p>
-              Yes, voting is for people in the room. You’ll need the ticket ID from your
-              badge plus the email you claimed it with.
+              Yes, voting is for {EVENT.conference} ticket holders. You’ll need the ticket ID
+              and the email address from your ticket email.
             </p>
           </details>
           <details className="faq-item">
@@ -225,7 +212,8 @@ export default function LandingPage() {
             <summary>Will it tell me if my ticket is valid?</summary>
             <p>
               No, on purpose. If it said “invalid ticket”, anyone could sit outside and guess
-              until something worked. We check tickets once, later, when we count.
+              until something worked. We check tickets once, later, when we count. So copy
+              both details carefully: a typo means your vote won’t count.
             </p>
           </details>
           <details className="faq-item">
@@ -249,47 +237,16 @@ export default function LandingPage() {
               appear as totals.
             </p>
           </details>
+          <details className="faq-item">
+            <summary>Who runs this?</summary>
+            <p>
+              {EVENT.operator}, an independent community. {EVENT.name} itself is organised by
+              FOSS United; this voting system is separate and shares no personal data with
+              anyone, because it never has any.
+            </p>
+          </details>
         </div>
       </section>
-
-      <footer className="border-t border-line pt-6 text-sm text-ink-faint">
-        <p>
-          {EVENT.name} is part of{' '}
-          <a
-            href={EVENT.links.indiafoss}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2 hover:text-ink"
-          >
-            {EVENT.conference}
-          </a>
-          , run by FOSS United. {EVENT.hall}, {EVENT.venue}, {EVENT.city}.
-        </p>
-        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-          <a
-            href={EVENT.links.event}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2 hover:text-ink"
-          >
-            Event page
-          </a>
-          <a
-            href={EVENT.links.proposals}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2 hover:text-ink"
-          >
-            All proposals
-          </a>
-          <a
-            href={`mailto:${EVENT.contactEmail}`}
-            className="underline underline-offset-2 hover:text-ink"
-          >
-            {EVENT.contactEmail}
-          </a>
-        </p>
-      </footer>
     </div>
   )
 }

@@ -173,8 +173,8 @@ export default function VotePage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:justify-between">
         <div className="card min-w-0 flex-1 p-6">
-          <p className="eyebrow">Ballot</p>
-          <h1 className="page-title mt-2">{conference.name}</h1>
+          <p className="eyebrow">{conference.name} voting</p>
+          <h1 className="page-title mt-2">Your ballot</h1>
           {conference.description && (
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-light">
               {conference.description}

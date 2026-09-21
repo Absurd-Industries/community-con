@@ -9,50 +9,50 @@ import { parseVoterList } from './voter-list.js'
  */
 describe('parseVoterList', () => {
   it('reads ticket,email pairs and normalises them', () => {
-    const { pairs } = parseVoterList('IF26-4821,Ashwin@Example.COM\nif26-1170, b@x.org')
+    const { pairs } = parseVoterList('k7m2p9,Ashwin@Example.COM\nh3q8w4, b@x.org')
 
     expect(pairs).toEqual([
-      { ticket: 'IF26-4821', email: 'ashwin@example.com' },
-      { ticket: 'IF26-1170', email: 'b@x.org' },
+      { ticket: 'K7M2P9', email: 'ashwin@example.com' },
+      { ticket: 'H3Q8W4', email: 'b@x.org' },
     ])
   })
 
   it('skips a header row in either column order', () => {
-    expect(parseVoterList('ticket_id,email\nIF26-1,a@x.com').pairs).toHaveLength(1)
-    expect(parseVoterList('email,ticket\na@x.com,IF26-1').pairs).toHaveLength(1)
+    expect(parseVoterList('ticket_id,email\nABC111,a@x.com').pairs).toHaveLength(1)
+    expect(parseVoterList('email,ticket\na@x.com,ABC111').pairs).toHaveLength(1)
   })
 
   it('accepts either column order on data rows too', () => {
-    expect(parseVoterList('a@x.com,IF26-1').pairs).toEqual([
-      { ticket: 'IF26-1', email: 'a@x.com' },
+    expect(parseVoterList('a@x.com,ABC111').pairs).toEqual([
+      { ticket: 'ABC111', email: 'a@x.com' },
     ])
   })
 
   it('handles semicolons, tabs and quoted cells', () => {
-    expect(parseVoterList('"IF26-1";"a@x.com"').pairs).toEqual([
-      { ticket: 'IF26-1', email: 'a@x.com' },
+    expect(parseVoterList('"ABC111";"a@x.com"').pairs).toEqual([
+      { ticket: 'ABC111', email: 'a@x.com' },
     ])
-    expect(parseVoterList('IF26-2\tb@x.com').pairs).toEqual([
-      { ticket: 'IF26-2', email: 'b@x.com' },
+    expect(parseVoterList('ABC222\tb@x.com').pairs).toEqual([
+      { ticket: 'ABC222', email: 'b@x.com' },
     ])
   })
 
   it('ignores blank lines without calling them errors', () => {
-    const { pairs, skipped } = parseVoterList('IF26-1,a@x.com\n\n   \nIF26-2,b@x.com\n')
+    const { pairs, skipped } = parseVoterList('ABC111,a@x.com\n\n   \nABC222,b@x.com\n')
 
     expect(pairs).toHaveLength(2)
     expect(skipped).toEqual([])
   })
 
   it('reports unusable lines by line number instead of dropping them', () => {
-    const { pairs, skipped } = parseVoterList('IF26-1,a@x.com\nIF26-2\nIF26-3,not-an-email')
+    const { pairs, skipped } = parseVoterList('ABC111,a@x.com\nABC222\nABC333,not-an-email')
 
     expect(pairs).toHaveLength(1)
     expect(skipped).toEqual([2, 3])
   })
 
   it('counts exact duplicates once', () => {
-    const { pairs, duplicates } = parseVoterList('IF26-1,a@x.com\nif26-1,A@X.com')
+    const { pairs, duplicates } = parseVoterList('ABC111,a@x.com\nabc111,A@X.com')
 
     expect(pairs).toHaveLength(1)
     expect(duplicates).toBe(1)
@@ -60,7 +60,7 @@ describe('parseVoterList', () => {
 
   it('keeps one ticket claimed twice as two separate entries', () => {
     // Different addresses are different voters, even on a lookalike ticket.
-    const { pairs, duplicates } = parseVoterList('IF26-1,a@x.com\nIF26-1,b@x.com')
+    const { pairs, duplicates } = parseVoterList('ABC111,a@x.com\nABC111,b@x.com')
 
     expect(pairs).toHaveLength(2)
     expect(duplicates).toBe(0)

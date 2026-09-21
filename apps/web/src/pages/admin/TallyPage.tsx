@@ -146,7 +146,7 @@ export default function TallyPage() {
             onChange={event => setRaw(event.target.value)}
             rows={9}
             placeholder={
-              'ticket_id,email\nIF26-4821,meera@example.com\nIF26-1170,anirban@example.org'
+              'ticket_id,email\nk7m2p9,meera@example.com\nh3q8w4,anirban@example.org'
             }
             className="ui-input resize-y font-mono text-xs"
           />

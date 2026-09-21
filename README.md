@@ -1,9 +1,16 @@
-# Communi-Con at IndiaFOSS 2026
+# Communi-Con Voting System
 
-> **Everyone has a shot at a 10 minute slot on our biggest stage.**
+The voting system for **Communi-Con at IndiaFOSS 2026**: ticket holders pick the community
+talks, and the seven with the most votes go on stage in Hall 1.
 
-Community members propose talks, ticket-holders vote, and the seven favourites go up in
-Hall 1 in front of 800+ people.
+It is run by **Absurd**, an independent community, and is not an official FOSS United
+property. Communi-Con itself is organised by FOSS United. The site must never present itself
+as the official event page; it says so in its header ("Voting System"), its footer, and its
+share card. Event details and proposals come from
+[FOSS United's Communi-Con page](https://fossunited.org/c/indiafoss/2026communi-con), shared
+there under CC BY-SA (the page states no version, so neither do we).
+
+Source: <https://github.com/Absurd-Industries/voting-system>
 
 | | |
 | --- | --- |
@@ -33,14 +40,15 @@ That's the whole setup. No keys, no `.env`, no second process.
 
 ## Who a voter is
 
-A ticket ID alone identifies nobody. A ticket has to be *claimed*, and claiming pairs it
+Ticket IDs are six characters, and they arrive in each attendee's **ticket email** (not on the
+badge). A ticket ID alone identifies nobody. A ticket has to be *claimed*, and claiming pairs it
 with an email address; one address can't hold several tickets. So the pair is the identity,
 and the pair is what gets hashed.
 
 ```
 voter_hash = SHA256_hex( upper(trim(ticket)) + "+" + lower(trim(email)) )
 
-  ("  if26-4821 ", "Ashwin@Example.COM ")  →  "IF26-4821+ashwin@example.com"
+  ("  k7m2p9 ", "Ashwin@Example.COM ")  →  "K7M2P9+ashwin@example.com"
 ```
 
 Both sides must produce identical bytes. `voterIdHash` in `apps/web/src/lib/hash.ts` is the
@@ -53,7 +61,12 @@ Two details that matter:
   `ashwin@gmail.com` on Sunday has to come out as one voter. Otherwise their first ballot
   is never superseded and both get counted. The seed data contains that exact case so the
   tally page demonstrates the collapse rather than asserting it.
-- **The literal `"+"`.** Without it, `("IF26-1", "2a@x.com")` and `("IF26-12", "a@x.com")`
+- **Typos fail silently, by design.** A mistyped ticket or email hashes to a voter nobody holds,
+  so the ballot is accepted and then dropped at tally time. The page can't warn about it
+  without becoming a way to test whether a ticket exists, so the gate shows a prominent
+  "double-check both" callout instead. Leading/trailing spaces and letter case are already
+  forgiven by the normalisation above; the callout covers what isn't.
+- **The literal `"+"`.** Without it, `("k7m2p", "9a@x.com")` and `("k7m2p9", "a@x.com")`
   hash to the same voter.
 
 ---

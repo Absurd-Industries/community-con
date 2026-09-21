@@ -28,12 +28,20 @@ export const EVENT = {
 
   contactEmail: 'indiafoss@fossunited.org',
 
+  /**
+   * Who runs THIS voting system. Not FOSS United: an independent community.
+   * The site must never present itself as an official FOSS United property.
+   */
+  operator: 'Absurd Industries',
+
   links: {
     event: 'https://fossunited.org/c/indiafoss/2026communi-con',
     submit: 'https://fossunited.org/dashboard/cfp/apply/indiafoss/2026communi-con',
     proposals: 'https://fossunited.org/dashboard/cfp/all/indiafoss/2026communi-con',
     fossUnited: 'https://fossunited.org',
     indiafoss: 'https://fossunited.org/indiafoss/2026',
+    /** This voting system's own source. */
+    source: 'https://github.com/Absurd-Industries/voting-system',
   },
 } as const
 

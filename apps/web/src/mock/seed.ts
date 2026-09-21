@@ -161,51 +161,51 @@ export interface VoterPair {
  * exactly what the tally is supposed to discard.
  */
 export const DEMO_CAST_PAIRS: VoterPair[] = [
-  { ticket: 'IF26-4821', email: 'meera.raghunathan@example.com' },
-  { ticket: 'IF26-1170', email: 'anirban.dasgupta@example.org' },
-  { ticket: 'IF26-9034', email: 'fatima.sheikh@example.com' },
-  { ticket: 'IF26-2265', email: 'karthik.v@example.com' },
-  { ticket: 'IF26-7712', email: 'sreelakshmi.nair@example.org' },
-  { ticket: 'IF26-3398', email: 'devendra.pawar@example.com' },
-  { ticket: 'IF26-8846', email: 'ritu.malhotra@example.com' },
-  { ticket: 'IF26-5501', email: 'joseph.mathew@example.org' },
-  { ticket: 'IF26-6627', email: 'aditi.kulkarni@example.com' },
-  { ticket: 'IF26-1093', email: 'imnainla.jamir@example.com' },
-  { ticket: 'IF26-4450', email: 'pranav.iyer@example.org' },
-  { ticket: 'IF26-2984', email: 'shalini.bose@example.com' },
-  { ticket: 'IF26-7136', email: 'bhaskar.saikia@example.com' },
-  { ticket: 'IF26-3357', email: 'tanvi.deshmukh@example.org' },
-  { ticket: 'IF26-9902', email: 'nikhil.rao@example.com' },
-  { ticket: 'IF26-6018', email: 'priya.menon@example.com' },
-  { ticket: 'IF26-8273', email: 'arjun.shetty@example.org' },
-  { ticket: 'IF26-1544', email: 'zainab.qureshi@example.com' },
-  { ticket: 'IF26-5860', email: 'rohan.gupta@example.com' },
-  { ticket: 'IF26-2411', email: 'divya.krishnan@example.org' },
-  { ticket: 'IF26-7799', email: 'sandeep.yadav@example.com' },
-  { ticket: 'IF26-3082', email: 'lakshmi.prasad@example.com' },
-  { ticket: 'IF26-4635', email: 'faisal.rahman@example.org' },
-  { ticket: 'IF26-9147', email: 'neha.bhatt@example.com' },
-  { ticket: 'IF26-6390', email: 'vivek.nambiar@example.com' },
-  { ticket: 'IF26-1826', email: 'ananya.sarkar@example.org' },
-  { ticket: 'IF26-8504', email: 'gurpreet.singh@example.com' },
-  { ticket: 'IF26-2758', email: 'kavya.reddy@example.com' },
-  { ticket: 'IF26-5219', email: 'tenzin.norbu@example.org' },
-  { ticket: 'IF26-7043', email: 'siddharth.jain@example.com' },
+  { ticket: '9dzq76', email: 'meera.raghunathan@example.com' },
+  { ticket: '59v24c', email: 'anirban.dasgupta@example.org' },
+  { ticket: 'e4mm86', email: 'fatima.sheikh@example.com' },
+  { ticket: 'q9s4tj', email: 'karthik.v@example.com' },
+  { ticket: 'wa2ugj', email: 'sreelakshmi.nair@example.org' },
+  { ticket: 'e93pat', email: 'devendra.pawar@example.com' },
+  { ticket: 'tkhjn5', email: 'ritu.malhotra@example.com' },
+  { ticket: 'q8dnyf', email: 'joseph.mathew@example.org' },
+  { ticket: 'e2edtg', email: 'aditi.kulkarni@example.com' },
+  { ticket: '5kqd46', email: 'imnainla.jamir@example.com' },
+  { ticket: 'stc33d', email: 'pranav.iyer@example.org' },
+  { ticket: 'e62jmb', email: 'shalini.bose@example.com' },
+  { ticket: 'tyfck9', email: 'bhaskar.saikia@example.com' },
+  { ticket: 'vadh8z', email: 'tanvi.deshmukh@example.org' },
+  { ticket: '5jpuzg', email: 'nikhil.rao@example.com' },
+  { ticket: 'ph7yac', email: 'priya.menon@example.com' },
+  { ticket: 'pz4jzg', email: 'arjun.shetty@example.org' },
+  { ticket: 'rkrecv', email: 'zainab.qureshi@example.com' },
+  { ticket: '9bfqjh', email: 'rohan.gupta@example.com' },
+  { ticket: '3b6thr', email: 'divya.krishnan@example.org' },
+  { ticket: 'd32qus', email: 'sandeep.yadav@example.com' },
+  { ticket: 'cyrauy', email: 'lakshmi.prasad@example.com' },
+  { ticket: '7d9q4n', email: 'faisal.rahman@example.org' },
+  { ticket: '6eddnw', email: 'neha.bhatt@example.com' },
+  { ticket: '3srsv3', email: 'vivek.nambiar@example.com' },
+  { ticket: 'h42jsa', email: 'ananya.sarkar@example.org' },
+  { ticket: 'dkxhdb', email: 'gurpreet.singh@example.com' },
+  { ticket: 'fq4kek', email: 'kavya.reddy@example.com' },
+  { ticket: 'ywpf8j', email: 'tenzin.norbu@example.org' },
+  { ticket: 'hegrc3', email: 'siddharth.jain@example.com' },
 
   // Not on the official list - discarded at tally time.
-  { ticket: 'IF26-0001', email: 'nobody@example.com' },
-  { ticket: 'IF26-0002', email: 'someone.else@example.org' },
-  { ticket: 'IF26-9999', email: 'guessing@example.com' },
-  { ticket: 'ABCD-1234', email: 'not.even.trying@example.com' },
+  { ticket: 'aaaaaa', email: 'nobody@example.com' },
+  { ticket: 'abc123', email: 'someone.else@example.org' },
+  { ticket: 'zzzzzz', email: 'guessing@example.com' },
+  { ticket: 'qwerty', email: 'not.even.trying@example.com' },
 
   /**
    * The same person as the very first entry, typed differently on their second
-   * visit: capitalised email, lowercase ticket, a trailing space. Normalisation
+   * visit: capitalised email, uppercase ticket, stray spaces either side. Normalisation
    * in `voterIdHash` collapses this to one voter - so the tally shows it as a
    * superseded ballot, not a second one. Remove this and the demo silently
    * double-counts them, which is the bug the normalisation exists to prevent.
    */
-  { ticket: 'if26-4821 ', email: 'Meera.Raghunathan@Example.COM' },
+  { ticket: ' 9DZQ76 ', email: 'Meera.Raghunathan@Example.COM' },
 ]
 
 /**
@@ -215,16 +215,16 @@ export const DEMO_CAST_PAIRS: VoterPair[] = [
 export const DEMO_OFFICIAL_PAIRS: VoterPair[] = [
   ...DEMO_CAST_PAIRS.slice(0, 30),
   // Ticket-holders who never voted. Turnout should reflect them.
-  { ticket: 'IF26-3741', email: 'harini.balaji@example.com' },
-  { ticket: 'IF26-8195', email: 'omar.farooq@example.org' },
-  { ticket: 'IF26-2606', email: 'sneha.pillai@example.com' },
-  { ticket: 'IF26-5478', email: 'rajat.kapoor@example.com' },
-  { ticket: 'IF26-9320', email: 'ishita.ghosh@example.org' },
-  { ticket: 'IF26-1259', email: 'mahesh.kulkarni@example.com' },
-  { ticket: 'IF26-6884', email: 'ayesha.khan@example.com' },
-  { ticket: 'IF26-4067', email: 'dinesh.kumar@example.org' },
-  { ticket: 'IF26-7512', email: 'pooja.shenoy@example.com' },
-  { ticket: 'IF26-3930', email: 'abhishek.das@example.com' },
+  { ticket: 'fj6cec', email: 'harini.balaji@example.com' },
+  { ticket: 'f77jke', email: 'omar.farooq@example.org' },
+  { ticket: 'yv2y2k', email: 'sneha.pillai@example.com' },
+  { ticket: 'bjvp2u', email: 'rajat.kapoor@example.com' },
+  { ticket: '4b9dad', email: 'ishita.ghosh@example.org' },
+  { ticket: 'xjrdda', email: 'mahesh.kulkarni@example.com' },
+  { ticket: 'ddnsk5', email: 'ayesha.khan@example.com' },
+  { ticket: 'me932q', email: 'dinesh.kumar@example.org' },
+  { ticket: 'qdz26f', email: 'pooja.shenoy@example.com' },
+  { ticket: 'zgf9a8', email: 'abhishek.das@example.com' },
 ]
 
 /** The sample list, in the CSV shape the tally page parses. */
@@ -237,9 +237,11 @@ export function seedConference(): Conference {
   return {
     id: CONFERENCE_ID,
     name: EVENT.name,
+    // Voting-first on purpose. The event's own tagline belongs to the official
+    // page; leading with it here is what made this site read like a copy of it.
     description:
-      `${EVENT.tagline} Community members propose talks, ticket-holders vote, and the ` +
-      `top ${SLOT_COUNT} take the main stage in ${EVENT.hall} before ${EVENT.audience} people.`,
+      `Talks proposed by the community, chosen by ${EVENT.conference} ticket holders. ` +
+      `The top ${SLOT_COUNT} go on stage in ${EVENT.hall}.`,
     voting_opens_at: SCHEDULE.votingOpensAt,
     voting_closes_at: SCHEDULE.votingClosesAt,
     voting_force_status: 'scheduled',

@@ -18,30 +18,35 @@ const ADMIN_NAV = [
 ]
 
 /**
- * The lockup: the real IndiaFOSS 2026 wordmark, then the event name.
+ * The lockup: the IndiaFOSS 2026 wordmark, the event, and what this site IS.
  *
- * The mark is the festival's own artwork (extracted from the IndiaFOSS speaker
- * poster generator), not an approximation - a voter arriving from a link in a
- * Telegram group should be able to tell at a glance that this is really FOSS
- * United and not someone harvesting ticket IDs.
+ * "Voting System" is load-bearing. Without it, the festival's logo next to the
+ * event name reads as the official fossunited.org page, and this is not that:
+ * it is an independent tool run by Absurd (see the footer). Stacked on two
+ * lines so the full label still fits beside the Vote button on a phone.
  */
 function Wordmark() {
   return (
     <Link
       to="/"
-      className="flex shrink-0 items-center gap-2.5"
-      aria-label={`${EVENT.name} home`}
+      className="flex min-w-0 shrink-0 items-center gap-2.5"
+      aria-label={`${EVENT.name} Voting System home`}
     >
       <img
         src="/images/indiafoss-wordmark.svg"
         alt={EVENT.conference}
-        className="h-5 w-auto"
+        className="h-5 w-auto shrink-0"
         width={56}
         height={20}
       />
-      <span aria-hidden="true" className="h-4 w-px bg-line" />
-      <span className="font-sans text-[0.95rem] font-bold tracking-tight text-ink">
-        {EVENT.name}
+      <span aria-hidden="true" className="h-7 w-px shrink-0 bg-line" />
+      <span className="flex flex-col leading-none">
+        <span className="font-sans text-[0.95rem] font-bold tracking-tight text-ink">
+          {EVENT.name}
+        </span>
+        <span className="mt-1 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+          Voting System
+        </span>
       </span>
     </Link>
   )
@@ -84,6 +89,55 @@ function Header() {
   )
 }
 
+/**
+ * On every page, not just the landing page: the ticket gate is where trust is
+ * decided, and it is the page people land on from a shared link.
+ *
+ * Three things a voter should be able to find without asking: who runs this
+ * (not FOSS United), what happens to their details (nothing leaves the
+ * browser), and where the borrowed content came from (credited, CC BY-SA).
+ */
+function Footer() {
+  const link = 'font-medium text-ink underline underline-offset-2 hover:text-accent-ink'
+  return (
+    <footer className="border-t border-line">
+      <div className="mx-auto max-w-5xl space-y-3 px-4 py-8 text-sm leading-relaxed text-ink-faint sm:px-6">
+        <p>
+          {EVENT.name} is part of {EVENT.conference}, organised by FOSS United. This voting
+          system is run by <strong className="font-semibold text-ink">{EVENT.operator}</strong>,
+          an independent community.
+        </p>
+        <p className="flex gap-2">
+          <i className="ph-bold ph-lock-simple mt-1 shrink-0 text-ink" aria-hidden="true" />
+          <span>
+            Your ticket ID and email never leave your browser. We only ever receive an
+            anonymous hash, so there’s no personal data to share.
+          </span>
+        </p>
+        <p>
+          Event details and talk proposals are from{' '}
+          <a href={EVENT.links.event} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+            FOSS United’s {EVENT.name} page
+          </a>
+          , used under CC BY-SA.
+          {/* No version on purpose: the source says "CC-BY-SA" and nothing more.
+              Linking a specific deed would claim a version it never stated. */}
+        </p>
+        <p className="flex flex-wrap gap-x-5 gap-y-1 pt-1">
+          <a href={EVENT.links.event} target="_blank" rel="noreferrer" className={link}>
+            Official event page
+            <i className="ph ph-arrow-up-right ml-1" aria-hidden="true" />
+          </a>
+          <a href={EVENT.links.source} target="_blank" rel="noreferrer" className={link}>
+            Source code
+            <i className="ph ph-arrow-up-right ml-1" aria-hidden="true" />
+          </a>
+        </p>
+      </div>
+    </footer>
+  )
+}
+
 /** Shown when an organiser route is opened without admin mode on. */
 function AdminOff() {
   return (
@@ -118,6 +172,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Footer />
       <DemoBar />
     </div>
   )

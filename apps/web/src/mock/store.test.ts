@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { tally, voteCounts, type Ballot, type DemoStore } from './store.js'
-import { sha256Hex, voterIdHash } from '../lib/hash.js'
+import { maskTicket, sha256Hex, voterIdHash } from '../lib/hash.js'
 
 /**
  * `tally` is the whole voting model. Everything that shows a vote count reads
@@ -100,38 +100,38 @@ describe('tally', () => {
  */
 describe('voterIdHash', () => {
   it('is stable across the ways a person types their own details', async () => {
-    const canonical = await voterIdHash('IF26-4821', 'ashwin@example.com')
+    const canonical = await voterIdHash('k7m2p9', 'ashwin@example.com')
 
     // Same human, second visit: shouted ticket, capitalised email, stray spaces.
-    expect(await voterIdHash('if26-4821 ', ' Ashwin@Example.COM')).toBe(canonical)
-    expect(await voterIdHash('  IF26-4821', 'ASHWIN@EXAMPLE.COM ')).toBe(canonical)
+    expect(await voterIdHash('K7M2P9 ', ' Ashwin@Example.COM')).toBe(canonical)
+    expect(await voterIdHash('  k7m2p9', 'ASHWIN@EXAMPLE.COM ')).toBe(canonical)
   })
 
   it('separates the two fields so they cannot run together', async () => {
-    // Without the "+" these would both hash "IF26-12a@x.com" and collide,
+    // Without the "+" these would both hash "K7M2P9A@X.COM" and collide,
     // handing one person's ballot to another.
-    expect(await voterIdHash('IF26-1', '2a@x.com')).not.toBe(
-      await voterIdHash('IF26-12', 'a@x.com')
+    expect(await voterIdHash('k7m2p', '9a@x.com')).not.toBe(
+      await voterIdHash('k7m2p9', 'a@x.com')
     )
   })
 
   it('treats one ticket claimed by two addresses as two voters', async () => {
-    expect(await voterIdHash('IF26-4821', 'a@example.com')).not.toBe(
-      await voterIdHash('IF26-4821', 'b@example.com')
+    expect(await voterIdHash('k7m2p9', 'a@example.com')).not.toBe(
+      await voterIdHash('k7m2p9', 'b@example.com')
     )
   })
 
   it('matches the documented recipe exactly', async () => {
-    // SHA-256 of the literal string "IF26-4821+ashwin@example.com". If this
+    // SHA-256 of the literal string "K7M2P9+ashwin@example.com". If this
     // fails, the backend and the browser have drifted apart.
-    expect(await voterIdHash('IF26-4821', 'ashwin@example.com')).toBe(
-      await sha256Hex('IF26-4821+ashwin@example.com')
+    expect(await voterIdHash('k7m2p9', 'ashwin@example.com')).toBe(
+      await sha256Hex('K7M2P9+ashwin@example.com')
     )
   })
 
   it('collapses a case-variant resubmission into one counted ballot', async () => {
-    const first = await voterIdHash('IF26-4821', 'ashwin@example.com')
-    const second = await voterIdHash('if26-4821', 'Ashwin@Example.com')
+    const first = await voterIdHash('k7m2p9', 'ashwin@example.com')
+    const second = await voterIdHash('K7M2P9', 'Ashwin@Example.com')
 
     const { ballots, summary } = tally(store(
       [ballot(first, ['t1'], 100), ballot(second, ['t2'], 200)],
@@ -142,5 +142,25 @@ describe('voterIdHash', () => {
     expect(ballots[0].talk_ids).toEqual(['t2'])
     expect(summary.superseded).toBe(1)
     expect(summary.from_unknown_tickets).toBe(0)
+  })
+})
+
+/**
+ * The masked ticket is printed in the ballot header, in public, on a phone
+ * held up in a crowded hall. It must never be enough to reconstruct the ID.
+ */
+describe('maskTicket', () => {
+  it('never reveals more than the last two characters of a six-character ID', () => {
+    const masked = maskTicket('k7m2p9')
+    expect(masked).toBe('••••p9')
+    expect(masked.replace(/•/g, '')).toHaveLength(2)
+  })
+
+  it('ignores stray spaces around the ID', () => {
+    expect(maskTicket('  k7m2p9 ')).toBe('••••p9')
+  })
+
+  it('reveals nothing at all for very short input', () => {
+    expect(maskTicket('ab')).toBe('••••')
   })
 })

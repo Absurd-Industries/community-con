@@ -46,7 +46,7 @@ export default function TicketGate({ onSubmit }: Props) {
   return (
     <div className="mx-auto max-w-md py-6 sm:py-12">
       <div className="card p-6 sm:p-8">
-        <p className="eyebrow">{EVENT.name}</p>
+        <p className="eyebrow">{EVENT.name} voting</p>
         <h1 className="page-title mt-2">Let’s find your ballot</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-light">
           Two quick things and you’re in.
@@ -64,14 +64,14 @@ export default function TicketGate({ onSubmit }: Props) {
                 setTicket(event.target.value)
                 setError(null)
               }}
-              placeholder="IF26-0000"
+              placeholder="xxxxxx"
               autoComplete="off"
-              autoCapitalize="characters"
+              autoCapitalize="off"
               spellCheck={false}
               className="ui-input font-mono tracking-wide"
             />
             <p className="mt-1.5 text-xs text-ink-faint">
-              It’s on your {EVENT.conference} badge.
+              It’s in your {EVENT.conference} ticket email.
             </p>
           </div>
 
@@ -104,6 +104,20 @@ export default function TicketGate({ onSubmit }: Props) {
               {error}
             </div>
           )}
+
+          {/* Deliberately loud. A typo here fails silently: the ballot is accepted,
+              then dropped at tally time, and nothing on this page can say so
+              without becoming a way to test whether a ticket exists.
+              `voterIdHash` already forgives edge spaces and letter case, so this
+              warns only about the errors it can't fix. */}
+          <div className="status-warn flex gap-2.5">
+            <i className="ph-bold ph-warning mt-0.5 shrink-0 text-ink" aria-hidden="true" />
+            <p className="leading-relaxed">
+              <strong className="font-semibold text-ink">Double-check both.</strong> Copy them
+              exactly from your ticket email. If either has a typo, your vote won’t count, and
+              this page can’t warn you: checking would mean knowing who you are.
+            </p>
+          </div>
 
           <button type="submit" disabled={!filled || busy} className="btn-primary w-full">
             {busy ? 'One moment…' : 'Continue to the ballot'}
