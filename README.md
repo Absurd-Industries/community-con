@@ -3,9 +3,10 @@
 Vote for the Communi-Con talks at **IndiaFOSS 2026**. Ticket holders pick the community talks,
 and the 7 with the most votes go on stage in Hall 1, 10 minutes each.
 
-This voting system is run by **Absurd**, an independent community. Communi-Con itself is
-organised by FOSS United; see the [official event page](https://fossunited.org/c/indiafoss/2026communi-con)
-for everything about the event.
+This voting system is run by [**Absurd Industries**](https://absurd.industries/), an
+independent community. Communi-Con itself is organised by FOSS United; see the
+[official event page](https://fossunited.org/c/indiafoss/2026communi-con) for everything about
+the event.
 
 ## Your privacy
 

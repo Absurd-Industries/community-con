@@ -40,6 +40,8 @@ export const EVENT = {
     proposals: 'https://fossunited.org/dashboard/cfp/all/indiafoss/2026communi-con',
     fossUnited: 'https://fossunited.org',
     indiafoss: 'https://fossunited.org/indiafoss/2026',
+    /** Who runs this voting system. */
+    operator: 'https://absurd.industries/',
     /** This voting system's own source. */
     source: 'https://github.com/Absurd-Industries/community-con',
   },

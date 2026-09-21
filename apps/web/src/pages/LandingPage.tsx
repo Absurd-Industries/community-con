@@ -240,7 +240,10 @@ export default function LandingPage() {
           <details className="faq-item">
             <summary>Who runs this?</summary>
             <p>
-              {EVENT.operator}, an independent community. {EVENT.name} itself is organised by
+              <a href={EVENT.links.operator} target="_blank" rel="noreferrer" className={offsite}>
+                {EVENT.operator}
+              </a>
+              , an independent community. {EVENT.name} itself is organised by
               FOSS United; this voting system is separate and shares no personal data with
               anyone, because it never has any.
             </p>

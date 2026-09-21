@@ -22,7 +22,7 @@ const ADMIN_NAV = [
  *
  * "Voting System" is load-bearing. Without it, the festival's logo next to the
  * event name reads as the official fossunited.org page, and this is not that:
- * it is an independent tool run by Absurd (see the footer). Stacked on two
+ * it is an independent tool run by Absurd Industries (see the footer). Stacked on two
  * lines so the full label still fits beside the Vote button on a phone.
  */
 function Wordmark() {
@@ -104,7 +104,16 @@ function Footer() {
       <div className="mx-auto max-w-5xl space-y-3 px-4 py-8 text-sm leading-relaxed text-ink-faint sm:px-6">
         <p>
           {EVENT.name} is part of {EVENT.conference}, organised by FOSS United. This voting
-          system is run by <strong className="font-semibold text-ink">{EVENT.operator}</strong>,
+          system is run by{' '}
+          <a
+            href={EVENT.links.operator}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-ink underline underline-offset-2 hover:text-accent-ink"
+          >
+            {EVENT.operator}
+          </a>
+          ,
           an independent community.
         </p>
         <p className="flex gap-2">
