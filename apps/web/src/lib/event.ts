@@ -41,7 +41,7 @@ export const EVENT = {
     fossUnited: 'https://fossunited.org',
     indiafoss: 'https://fossunited.org/indiafoss/2026',
     /** This voting system's own source. */
-    source: 'https://github.com/Absurd-Industries/voting-system',
+    source: 'https://github.com/Absurd-Industries/community-con',
   },
 } as const
 
