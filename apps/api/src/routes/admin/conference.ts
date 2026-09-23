@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { getConference, getEligibleTalkCount } from '../../db/queries.js'
 import { logAdminAction } from '../../lib/audit.js'
-import type { Bindings, Variables } from '../../index.js'
+import type { App } from '../../index.js'
 import { ballotTalkCount, getVotingStatus, isBallotLocked, recommendedVotes, type SpeakerVisibility } from '@cc/db'
 import { conferencePatchTouchesLockedBallot, validateVoteAllowance } from '../../lib/conference-policy.js'
 
-const adminConference = new Hono<{ Bindings: Bindings; Variables: Variables }>()
+const adminConference = new Hono<App>()
 const FORCE_STATUSES = new Set(['open', 'closed', 'scheduled'])
 
 type ConferenceBody = {
@@ -93,7 +93,7 @@ adminConference.post('/', async (c) => {
   ).run()
 
   const conf = await getConference(c.env.DB)
-  await logAdminAction(c.env.DB, c.get('entityId'), 'create', 'conference', conf?.id ?? id, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'create', 'conference', conf?.id ?? id, {
     name: body.name!.trim(),
     votes_per_voter: body.votes_per_voter ?? 0,
   })
@@ -163,7 +163,7 @@ adminConference.put('/', async (c) => {
   ).run()
 
   const updated = await getConference(c.env.DB)
-  await logAdminAction(c.env.DB, c.get('entityId'), 'update', 'conference', conf.id, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'update', 'conference', conf.id, {
     before: {
       name: conf.name,
       voting_opens_at: conf.voting_opens_at,
@@ -192,19 +192,21 @@ adminConference.post('/reset-ballot', async (c) => {
     return c.json({ error: 'Type RESET VOTES to confirm this destructive action.' }, 422)
   }
 
-  const voteCount = await c.env.DB.prepare(`
-    SELECT COUNT(*) as count FROM votes v
-    INNER JOIN talks t ON t.id = v.talk_id
-    WHERE t.conference_id = ?
-  `).bind(conf.id).first<{ count: number }>()
+  const voteCount = await c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM ballots WHERE conference_id = ?'
+  ).bind(conf.id).first<{ count: number }>()
 
+  // The one place ballots are ever deleted, and it takes a typed confirmation
+  // to get here. Everything goes: the ballots, the official ticket list that
+  // was tallied against them, and any tie-break recorded off that count.
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM organizer_tie_breaks WHERE conference_id = ?').bind(conf.id),
-    c.env.DB.prepare('DELETE FROM votes WHERE talk_id IN (SELECT id FROM talks WHERE conference_id = ?)').bind(conf.id),
+    c.env.DB.prepare('DELETE FROM ballots WHERE conference_id = ?').bind(conf.id),
+    c.env.DB.prepare('DELETE FROM valid_voters WHERE conference_id = ?').bind(conf.id),
     c.env.DB.prepare(`UPDATE conferences SET ballot_locked_at = NULL, ballot_talk_count = NULL, voting_force_status = 'closed',
       voting_opens_at = NULL, voting_closes_at = NULL, results_public = 0 WHERE id = ?`).bind(conf.id),
   ])
-  await logAdminAction(c.env.DB, c.get('entityId'), 'reset_ballot', 'conference', conf.id, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'reset_ballot', 'conference', conf.id, {
     votes_deleted: voteCount?.count ?? 0,
   })
   return c.json({ ok: true, votes_deleted: voteCount?.count ?? 0 })

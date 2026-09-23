@@ -10,6 +10,7 @@ import { EVENT } from '../lib/event.js'
 import TicketGate from '../components/TicketGate.js'
 import TalkDetailModal, { type TalkDetail } from '../components/TalkDetailModal.js'
 import VoteCompleteModal from '../components/VoteCompleteModal.js'
+import VoterHash from '../components/VoterHash.js'
 import { TalkGridSkeleton } from '../components/TalkCardSkeleton.js'
 
 interface Conference {
@@ -189,6 +190,9 @@ export default function VotePage() {
               use a different ticket
             </button>
           </p>
+          <div className="mt-4">
+            <VoterHash hash={ticket.hash} />
+          </div>
         </div>
         <div className="card-ink flex shrink-0 flex-col justify-center px-6 py-5 sm:w-52">
           <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-surface/60">
@@ -384,6 +388,7 @@ export default function VotePage() {
           votesTotal={selected.length}
           castAt={savedAt}
           deadline={votingClosesAt}
+          voterHash={ticket.hash}
           onClose={() => setJustSubmitted(false)}
         />
       )}

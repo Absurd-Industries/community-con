@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { formatDateTime } from '../lib/time.js'
+import VoterHash from './VoterHash.js'
 
 /**
  * Confirmation after a ballot is submitted.
@@ -11,12 +12,15 @@ export default function VoteCompleteModal({
   votesTotal,
   castAt,
   deadline,
+  voterHash,
   onClose,
 }: {
   votesTotal: number
   /** When this ballot was recorded. Every ballot is stamped; show it. */
   castAt: number | null
   deadline: string | null
+  /** Shown as a receipt: the ID this ballot was filed under. */
+  voterHash: string
   onClose: () => void
 }) {
   useEffect(() => {
@@ -55,6 +59,12 @@ export default function VoteCompleteModal({
             Changed your mind? Submit again {deadline ? `before ${deadline}` : 'before voting closes'}.
             Only your last ballot counts.
           </p>
+
+          {/* The receipt. Someone who notes this down can find their own ballot
+              in the published log afterwards and check it was counted. */}
+          <div className="mt-4">
+            <VoterHash hash={voterHash} />
+          </div>
 
           <button onClick={onClose} className="btn-primary mt-6 w-full">
             Back to the ballot

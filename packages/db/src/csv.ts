@@ -129,3 +129,62 @@ function parseCsvRecords(csv: string): string[][] {
 
   return records
 }
+
+/**
+ * The columns an export writes, and the ones the importer above reads back.
+ *
+ * Deliberately the same list, in this file, so the two cannot drift apart: an
+ * export that will not re-import is a trap for anyone editing proposals in a
+ * spreadsheet and loading them back.
+ */
+export const CSV_COLUMNS = [
+  'title',
+  'description',
+  'duration_minutes',
+  'presenter_name',
+  'presenter_bio',
+  'presenter_email',
+  'talk_type',
+  'cfp_url',
+  'cfp_content',
+  'references',
+] as const
+
+/**
+ * Quote a single cell.
+ *
+ * Anything with a comma, a quote, a newline or edge whitespace has to be
+ * quoted, or the row silently gains a column when it is read back. Leading and
+ * trailing spaces matter too: Excel eats them otherwise.
+ */
+function csvCell(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return ''
+  const text = String(value)
+  if (text === '') return ''
+  if (/[",\r\n]/.test(text) || text !== text.trim()) {
+    return `"${text.replace(/"/g, '""')}"`
+  }
+  return text
+}
+
+type ExportableTalk = Partial<Record<(typeof CSV_COLUMNS)[number], string | number | null>> & {
+  id?: string
+}
+
+/**
+ * Serialise talks to CSV that `parseAndValidateCsv` reads back unchanged.
+ *
+ * `withId` prepends the talk's internal id. That id is what appears in the
+ * ballot log's talk_ids, so anyone counting the votes themselves needs this
+ * column to turn "demo_1" into a title. The importer ignores the column, so an
+ * exported file still re-imports; the new talks simply get fresh ids.
+ */
+export function talksToCsv(talks: ExportableTalk[], { withId = false } = {}): string {
+  const columns = withId ? ['id', ...CSV_COLUMNS] : [...CSV_COLUMNS]
+  const lines = [columns.join(',')]
+  for (const talk of talks) {
+    lines.push(columns.map(column => csvCell((talk as Record<string, never>)[column])).join(','))
+  }
+  // Trailing newline: some spreadsheet importers drop the last row without it.
+  return lines.join('\n') + '\n'
+}

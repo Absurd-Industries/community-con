@@ -1,19 +1,23 @@
-import type { Bindings, Variables } from '../index.js'
-
+/**
+ * What organisers did, and when.
+ *
+ * The ballot log says what voters submitted. This says what the people running
+ * the vote changed - the two together are what an independent checker reads.
+ */
 export async function logAdminAction(
   db: D1Database,
-  adminUserId: Variables['entityId'],
+  adminLabel: string,
   action: string,
   targetType: string,
   targetId: string | null,
   details?: unknown
 ) {
   await db.prepare(`
-    INSERT INTO audit_logs (id, admin_user_id, action, target_type, target_id, details, created_at)
+    INSERT INTO audit_logs (id, admin_label, action, target_type, target_id, details, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(),
-    adminUserId,
+    adminLabel,
     action,
     targetType,
     targetId,
@@ -21,5 +25,3 @@ export async function logAdminAction(
     Date.now()
   ).run()
 }
-
-export type AuditEnv = Pick<Bindings, 'DB'>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { rankTalks, serializePublicTalk } from './talk-response.js'
+import { serializePublicTalk } from './talk-response.js'
 import type { Talk } from '@cc/db'
 
 const talk: Talk & { vote_count: number } = {
@@ -54,17 +54,5 @@ describe('serializePublicTalk', () => {
 
   it('includes result fields only when present', () => {
     expect(serializePublicTalk(talk, 'basic')).toMatchObject({ vote_count: 7 })
-  })
-})
-
-describe('rankTalks', () => {
-  it('assigns the same competition rank to equal vote totals', () => {
-    const ranked = rankTalks([
-      { ...talk, id: 'a', vote_count: 8 },
-      { ...talk, id: 'b', vote_count: 5 },
-      { ...talk, id: 'c', vote_count: 5 },
-      { ...talk, id: 'd', vote_count: 2 },
-    ])
-    expect(ranked.map(({ rank }) => rank)).toEqual([1, 2, 2, 4])
   })
 })

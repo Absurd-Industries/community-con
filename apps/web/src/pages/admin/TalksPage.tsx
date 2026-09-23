@@ -175,6 +175,33 @@ export default function TalksPage() {
     },
   })
 
+  const [exporting, setExporting] = useState(false)
+
+  /**
+   * Download the proposal list.
+   *
+   * Same columns the importer accepts, so this round-trips: export, fix things
+   * in a spreadsheet, import back. It carries presenter emails, so it is an
+   * organiser-only file - not something to forward around.
+   */
+  async function handleExport() {
+    setExporting(true)
+    setCsvError(null)
+    try {
+      const blob = await apiFetch<Blob>('/api/admin/talks/export')
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `proposals-${new Date().toISOString().slice(0, 10)}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      setCsvError(error instanceof Error ? error.message : 'Could not export.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (isLoading) return <div className="text-sm uppercase tracking-wide text-ink-faint">Loading…</div>
 
   return (
@@ -192,10 +219,11 @@ export default function TalksPage() {
 
       {/* CSV Import */}
       <div className="ui-card space-y-2 p-4">
-        <p className="section-title">Import from CSV</p>
+        <p className="section-title">CSV</p>
         <p className="text-xs text-ink-faint">
           Columns: title, description, duration_minutes, presenter_name, presenter_bio, presenter_email, talk_type, cfp_url, cfp_content.
           Also accepts the FOSS United submissions export (session_title, speaker, track, link).
+          Importing is disabled once voting opens and the ballot locks; exporting always works.
         </p>
         {csvError && <pre className="status-error whitespace-pre-wrap">{csvError}</pre>}
         {csvSuccess && <p className="text-xs font-medium text-positive">{csvSuccess}</p>}
@@ -207,6 +235,20 @@ export default function TalksPage() {
             }}
             className="text-sm text-ink" />
           {importCsv.isPending && <span className="text-sm text-ink-faint">Importing…</span>}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+          <button
+            onClick={handleExport}
+            disabled={exporting || talks.length === 0}
+            className="btn-outline btn-sm"
+          >
+            {exporting ? 'Exporting…' : `Export ${talks.length} proposals`}
+          </button>
+          <span className="text-xs text-ink-faint">
+            Downloads the same columns this imports, so you can edit in a spreadsheet and load
+            it back. Includes presenter emails &mdash; organiser use only.
+          </span>
         </div>
       </div>
 

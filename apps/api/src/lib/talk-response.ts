@@ -34,14 +34,3 @@ export function serializePublicTalk(
 
   return result
 }
-
-export function rankTalks<T extends { vote_count: number }>(talks: T[]) {
-  let previousVotes: number | undefined
-  let previousRank = 0
-  return talks.map((talk, index) => {
-    const rank = talk.vote_count === previousVotes ? previousRank : index + 1
-    previousVotes = talk.vote_count
-    previousRank = rank
-    return { ...talk, rank }
-  })
-}

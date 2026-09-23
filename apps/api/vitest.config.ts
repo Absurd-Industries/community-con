@@ -4,9 +4,11 @@ export default defineWorkersConfig({
   test: {
     poolOptions: {
       workers: {
-        wrangler: { configPath: './wrangler.toml' },
         miniflare: {
+          compatibilityDate: '2026-07-20',
+          compatibilityFlags: ['nodejs_compat'],
           d1Databases: ['DB'],
+          bindings: { ADMIN_PASSWORD: 'test-password' },
         },
       },
     },

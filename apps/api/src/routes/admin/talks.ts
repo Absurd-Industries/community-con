@@ -1,17 +1,17 @@
 import { Hono } from 'hono'
-import { getConference, getTalksWithVoteCounts } from '../../db/queries.js'
-import type { Bindings, Variables } from '../../index.js'
+import { getConference, tallyConference } from '../../db/queries.js'
+import type { App } from '../../index.js'
 import { logAdminAction } from '../../lib/audit.js'
-import { isBallotLocked, parseAndValidateCsv, type Talk } from '@cc/db'
+import { isBallotLocked, parseAndValidateCsv, talksToCsv, type Talk } from '@cc/db'
 
-const adminTalks = new Hono<{ Bindings: Bindings; Variables: Variables }>()
+const adminTalks = new Hono<App>()
 
 adminTalks.get('/', async (c) => {
   const conf = await getConference(c.env.DB)
   if (!conf) return c.json({ error: 'No conference configured' }, 404)
 
-  const { results } = await getTalksWithVoteCounts(c.env.DB, conf.id)
-  return c.json(results)
+  const { talks } = await tallyConference(c.env.DB, conf.id)
+  return c.json(talks)
 })
 
 adminTalks.post('/', async (c) => {
@@ -60,11 +60,40 @@ adminTalks.post('/', async (c) => {
   ).run()
 
   const talk = await c.env.DB.prepare('SELECT * FROM talks WHERE id = ?').bind(id).first()
-  await logAdminAction(c.env.DB, c.get('entityId'), 'create', 'talk', id, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'create', 'talk', id, {
     title: body.title.trim(),
     presenter_name: body.presenter_name.trim(),
   })
   return c.json(talk, 201)
+})
+
+/**
+ * The proposal list as CSV.
+ *
+ * Same columns the importer reads, so this round-trips: export, edit in a
+ * spreadsheet, import back. Registered before /:id so the word "export" is
+ * never mistaken for a talk id.
+ *
+ * Unlike the results export this carries presenter_email, which is why it sits
+ * behind the organiser password.
+ */
+adminTalks.get('/export', async (c) => {
+  const conf = await getConference(c.env.DB)
+  if (!conf) return c.json({ error: 'No conference configured' }, 404)
+
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM talks WHERE conference_id = ? ORDER BY created_at ASC'
+  ).bind(conf.id).all<Talk>()
+
+  // ?ids=0 drops the id column, for a file meant only to be re-imported.
+  const withId = c.req.query('ids') !== '0'
+
+  return new Response(talksToCsv(results, { withId }), {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="proposals.csv"',
+    },
+  })
 })
 
 adminTalks.post('/import', async (c) => {
@@ -112,7 +141,7 @@ adminTalks.post('/import', async (c) => {
 
   await c.env.DB.batch(stmts)
 
-  await logAdminAction(c.env.DB, c.get('entityId'), 'import', 'talk', null, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'import', 'talk', null, {
     imported: rows.length,
   })
 
@@ -175,7 +204,7 @@ adminTalks.put('/:id', async (c) => {
   ).run()
 
   const updated = await c.env.DB.prepare('SELECT * FROM talks WHERE id = ?').bind(talkId).first()
-  await logAdminAction(c.env.DB, c.get('entityId'), 'update', 'talk', talkId, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'update', 'talk', talkId, {
     before: {
       title: existing.title,
       presenter_name: existing.presenter_name,
@@ -195,22 +224,17 @@ adminTalks.delete('/:id', async (c) => {
 
   const talkId = c.req.param('id')
   const existing = await c.env.DB.prepare(
-    `SELECT t.id, t.title, COUNT(v.id) as vote_count
-     FROM talks t
-     LEFT JOIN votes v ON v.talk_id = t.id
-     WHERE t.id = ? AND t.conference_id = ?
-     GROUP BY t.id`
-  ).bind(talkId, conf.id).first<{ id: string; title: string; vote_count: number }>()
+    'SELECT id, title FROM talks WHERE id = ? AND conference_id = ?'
+  ).bind(talkId, conf.id).first<{ id: string; title: string }>()
   if (!existing) return c.json({ error: 'Talk not found' }, 404)
 
-  await c.env.DB.batch([
-    c.env.DB.prepare('DELETE FROM votes WHERE talk_id = ?').bind(talkId),
-    c.env.DB.prepare('DELETE FROM talks WHERE id = ?').bind(talkId),
-  ])
+  // Ballots are append-only and are not edited here, even though one may name
+  // this talk. The tally ignores ids it cannot resolve, so a deleted talk
+  // simply stops being counted - and the ballot stays exactly as it was cast.
+  await c.env.DB.prepare('DELETE FROM talks WHERE id = ?').bind(talkId).run()
 
-  await logAdminAction(c.env.DB, c.get('entityId'), 'delete', 'talk', talkId, {
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'delete', 'talk', talkId, {
     title: existing.title,
-    vote_count_deleted: existing.vote_count,
   })
 
   return c.json({ ok: true })
@@ -230,7 +254,7 @@ adminTalks.post('/:id/withdraw', async (c) => {
   `).bind(Date.now(), reason, talkId, conf.id).run()
   if (result.meta.changes === 0) return c.json({ error: 'Active talk not found' }, 404)
 
-  await logAdminAction(c.env.DB, c.get('entityId'), 'withdraw', 'talk', talkId, { reason })
+  await logAdminAction(c.env.DB, c.get('adminLabel'), 'withdraw', 'talk', talkId, { reason })
   return c.json({ ok: true })
 })
 

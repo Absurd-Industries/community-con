@@ -1,38 +1,61 @@
-import { MockHttpError, handleRequest } from '../mock/handlers.js'
+import { getAdminPassword, clearAdminPassword } from './admin.js'
 
 /**
  * The seam between the app and its data.
  *
- * In this design preview every call is served from localStorage - see
- * src/mock/. The signature is deliberately identical to the networked version
- * this replaced, so no page or component knows the difference.
- *
- * BACKEND TEAM: to point this at the real Worker, restore the fetch body below
- * and delete src/mock/. Nothing else in src/ needs to change.
- *
- *   const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}${path}`, { ...options, headers })
- *   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText)
- *   return res.json()
+ * Everything the app knows about the server goes through here. The API lives on
+ * the same origin as the site - one Worker serves both - so there is no base URL
+ * to configure and no CORS. In local development Vite proxies /api to the Worker
+ * on :8787; see vite.config.ts.
  */
+
+const ADMIN_PASSWORD_HEADER = 'X-Admin-Password'
+
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
+  }
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const method = (options.method ?? 'GET').toUpperCase()
+  const headers = new Headers(options.headers)
 
-  let body: unknown = undefined
-  if (typeof options.body === 'string') {
-    // Talk CSV import posts raw text; everything else posts JSON.
+  // Default to JSON, but never for a FormData body: the browser has to set
+  // that header itself so it can include the multipart boundary. Setting it
+  // here breaks the CSV upload with an unhelpful parse error on the server.
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+  if (options.body !== undefined && !isFormData && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  // Organiser calls carry the shared password. Voter calls carry nothing at all,
+  // which is the point - a ballot must not be tied to anything identifying.
+  if (path.startsWith('/api/admin/')) {
+    const password = getAdminPassword()
+    if (password) headers.set(ADMIN_PASSWORD_HEADER, password)
+  }
+
+  const response = await fetch(path, { ...options, headers })
+
+  if (!response.ok) {
+    // A stored password that has stopped working means the organisers changed
+    // it. Forget it so the next render asks again instead of looping on 401s.
+    if (response.status === 401 && path.startsWith('/api/admin/')) clearAdminPassword()
+
+    let message = response.statusText
     try {
-      body = JSON.parse(options.body)
+      const body = await response.json() as { error?: string }
+      if (body?.error) message = body.error
     } catch {
-      body = options.body
+      // A non-JSON error body tells us nothing useful; the status line will do.
     }
-  } else if (options.body != null) {
-    body = options.body
+    throw new ApiError(message, response.status)
   }
 
-  try {
-    return (await handleRequest(method, path, body)) as T
-  } catch (error) {
-    if (error instanceof MockHttpError) throw new Error(error.message)
-    throw error
-  }
+  if (response.status === 204) return undefined as T
+
+  const contentType = response.headers.get('Content-Type') ?? ''
+  if (contentType.includes('application/json')) return response.json() as Promise<T>
+  // CSV exports come back as a Blob for the download link to point at.
+  return response.blob() as Promise<T>
 }

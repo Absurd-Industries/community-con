@@ -1,7 +1,7 @@
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
-import { useAdminMode } from './lib/admin.js'
+import { clearAdminPassword, useAdminMode } from './lib/admin.js'
 import { EVENT } from './lib/event.js'
-import DemoBar from './components/DemoBar.js'
+import AdminGate from './components/AdminGate.js'
 import LandingPage from './pages/LandingPage.js'
 import VotePage from './pages/VotePage.js'
 import PublicResultsPage from './pages/PublicResultsPage.js'
@@ -76,7 +76,15 @@ function Header() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && <span className="tag tag-muted hidden sm:inline-flex">Organiser view</span>}
+          {isAdmin && (
+            <button
+              onClick={clearAdminPassword}
+              className="btn-ghost btn-sm hidden sm:inline-flex"
+              title="Forget the organiser password on this device"
+            >
+              Lock
+            </button>
+          )}
           <Link
             to="/vote"
             className={`btn btn-sm ${pathname === '/vote' ? 'btn-outline' : 'btn-primary'}`}
@@ -147,24 +155,8 @@ function Footer() {
   )
 }
 
-/** Shown when an organiser route is opened without admin mode on. */
-function AdminOff() {
-  return (
-    <div className="empty-state">
-      <i className="ph ph-lock-simple text-3xl opacity-40" aria-hidden="true" />
-      <p className="section-title text-ink">Organiser view is off</p>
-      <p className="max-w-sm text-sm">
-        Turn on <strong className="font-semibold text-ink">Organiser view</strong> in the demo
-        panel to see the setup, proposal, results and tally screens.
-      </p>
-    </div>
-  )
-}
-
 export default function App() {
-  const isAdmin = useAdminMode()
-
-  const adminOnly = (element: React.ReactNode) => (isAdmin ? element : <AdminOff />)
+  const adminOnly = (element: React.ReactNode) => <AdminGate>{element}</AdminGate>
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -182,7 +174,6 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      <DemoBar />
     </div>
   )
 }

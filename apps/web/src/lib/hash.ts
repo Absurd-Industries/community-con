@@ -121,3 +121,15 @@ export function maskEmail(raw: string): string {
 export function looksLikeEmail(raw: string): boolean {
   return /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(raw.trim())
 }
+
+/**
+ * Hash a whole list of claimed (ticket, email) pairs.
+ *
+ * The organiser's official ticket list goes through this before anything is
+ * sent. The server receives hashes only - the same hashes voters' browsers
+ * produced - so the list of who holds a ticket never leaves the organiser's
+ * machine either.
+ */
+export function hashPairs(pairs: Array<{ ticket: string; email: string }>): Promise<string[]> {
+  return Promise.all(pairs.map(pair => voterIdHash(pair.ticket, pair.email)))
+}

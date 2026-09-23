@@ -17,12 +17,6 @@ interface Conference {
   ballot_locked: boolean
 }
 
-interface AdminUser {
-  id: string
-  email: string
-  created_at: number
-}
-
 interface AuditLog {
   id: string
   action: string
@@ -30,7 +24,7 @@ interface AuditLog {
   target_id: string | null
   details: unknown
   created_at: number
-  admin_email: string | null
+  admin_label: string
 }
 
 export default function ConferencePage() {
@@ -39,11 +33,6 @@ export default function ConferencePage() {
   const { data: conf, isLoading } = useQuery({
     queryKey: ['admin-conference'],
     queryFn: () => apiFetch<Conference>('/api/admin/conference').catch(() => null),
-  })
-
-  const { data: admins = [] } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: () => apiFetch<AdminUser[]>('/api/admin/users'),
   })
 
   const { data: auditLogs = [] } = useQuery({
@@ -107,20 +96,6 @@ export default function ConferencePage() {
       setError(null)
     },
     onError: (e: Error) => { setError(e.message); setSuccess(null) },
-  })
-
-  const removeAdmin = useMutation({
-    mutationFn: (id: string) => apiFetch(`/api/admin/users/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-users'] })
-      qc.invalidateQueries({ queryKey: ['admin-audit'] })
-      setSuccess('Admin removed.')
-      setError(null)
-    },
-    onError: (e: Error) => {
-      setError(e.message)
-      setSuccess(null)
-    },
   })
 
   const voteBudget = parseInt(votesPerVoter || '0', 10)
@@ -310,36 +285,6 @@ export default function ConferencePage() {
       {conf && (
         <section className="ui-card space-y-4 p-5 sm:p-6">
           <div>
-            <h2 className="section-title">Admins</h2>
-            <p className="mt-1 text-sm text-ink-faint">
-              The first synced user becomes admin. Configured admin emails can add more.
-            </p>
-          </div>
-          <div className="divide-y divide-ink/15 border-2 border-ink">
-            {admins.map(admin => (
-              <div key={admin.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-bold text-ink">{admin.email}</p>
-                  <p className="text-xs text-ink-faint">Added {formatDateTime(admin.created_at)}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirm(`Remove admin access for ${admin.email}?`)) removeAdmin.mutate(admin.id)
-                  }}
-                  disabled={removeAdmin.isPending || admins.length <= 1}
-                  className="btn-label"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {conf && (
-        <section className="ui-card space-y-4 p-5 sm:p-6">
-          <div>
             <h2 className="section-title">Audit Trail</h2>
             <p className="mt-1 text-sm text-ink-faint">
               Recent admin actions that affect the ballot, access, voting rules, or publication.
@@ -358,7 +303,7 @@ export default function ConferencePage() {
                     <p className="text-xs text-ink-faint">{formatDateTime(log.created_at)}</p>
                   </div>
                   <p className="mt-1 text-xs text-ink-faint">
-                    {log.admin_email ?? 'Unknown admin'}
+                    {log.admin_label}
                   </p>
                 </div>
               ))}

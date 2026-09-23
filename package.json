@@ -7,17 +7,16 @@
   ],
   "scripts": {
     "dev": "npm -w apps/web run dev",
+    "dev:api": "wrangler dev",
     "build": "npm -w apps/web run build",
     "deploy": "npm run build && wrangler deploy",
     "preview": "npm -w apps/web run preview",
-    "test": "npm -w apps/web run test && npm -w packages/db run test",
+    "test": "npm -w apps/web run test && npm -w packages/db run test && npm -w apps/api run test",
     "typecheck": "npm -w apps/web exec tsc -- --noEmit && npm -w apps/api exec tsc -- --noEmit",
-    "_comment": "--- Backend. Not needed for the design preview; see README. ---",
-    "dev:api": "npm -w apps/api run dev",
-    "test:api": "npm -w apps/api run test",
-    "db:reset:local": "npm -w apps/api run db:reset:local",
-    "db:seed:local": "npm -w apps/api run db:seed:local",
-    "db:reset-seed:local": "npm -w apps/api run db:reset-seed:local"
+    "db:migrate:local": "wrangler d1 migrations apply community-con --local",
+    "db:migrate:remote": "wrangler d1 migrations apply community-con --remote",
+    "db:seed:local": "wrangler d1 execute community-con --local --file packages/db/seed.sql",
+    "db:seed:remote": "wrangler d1 execute community-con --remote --file packages/db/seed.sql"
   },
   "devDependencies": {
     "wrangler": "^4.112.0"

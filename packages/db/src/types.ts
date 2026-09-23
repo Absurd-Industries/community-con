@@ -15,13 +15,6 @@ export interface Conference {
   created_at: number
 }
 
-export interface SlotType {
-  id: string
-  conference_id: string
-  duration_minutes: number
-  count: number
-}
-
 export interface Talk {
   id: string
   conference_id: string
@@ -46,34 +39,13 @@ export interface OrganizerTieBreak {
   selected_talk_id: string
   tied_talk_ids: string
   reason: string
-  admin_user_id: string
+  admin_label: string
   created_at: number
-}
-
-export interface Voter {
-  id: string
-  clerk_user_id: string
-  email: string
-  created_at: number
-}
-
-export interface AdminUser {
-  id: string
-  clerk_user_id: string
-  email: string
-  created_at: number
-}
-
-export interface Vote {
-  id: string
-  voter_id: string
-  talk_id: string
-  cast_at: number
 }
 
 export interface AuditLog {
   id: string
-  admin_user_id: string
+  admin_label: string
   action: string
   target_type: string
   target_id: string | null

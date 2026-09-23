@@ -35,12 +35,19 @@ under CC BY-SA.
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173
+npm run db:migrate:local
+npm run db:seed:local
+echo "ADMIN_PASSWORD=local-test-password" > .dev.vars
+
+npm run dev:api      # the Worker, on :8787
+npm run dev          # the site, on :5173
 ```
 
-No keys, no `.env`, no second process. This is a design preview: everything runs in the
-browser out of `localStorage`, and a **Demo** panel (bottom left) lets you move the voting
-window, publish results and open the organiser screens.
+Two processes: Vite serves the site and proxies `/api` to the Worker. In production a
+single Worker does both, so there is one origin and no CORS.
+
+The database starts with the conference and no proposals. For something to click on,
+load `packages/db/demo-talks.sql` - invented talks, local database only.
 
 ## How voting works
 
@@ -67,25 +74,44 @@ Trimming and case folding mean small differences between visits still count as o
 `"+"` stops two different pairs from running together. `voterIdHash` in
 `apps/web/src/lib/hash.ts` is the reference, and a test pins it.
 
-**The ballot endpoint** the backend needs to provide:
+**The ballot endpoint**:
 
 ```
 POST /api/ballots
 { voter_hash: string, talk_ids: string[] }
 ```
 
-Respond identically to real and invented pairs, append only.
+It answers a real pair and an invented one identically - same status, same body - and
+appends rather than updating. Anything else would turn it into a way to find out who
+holds a ticket.
 
 **Where things live**
 
 ```
-apps/web/src/lib/event.ts   Every event fact and link. Edit here when the schedule moves.
-apps/web/src/lib/hash.ts    The voter hash.
-apps/web/src/lib/api.ts     The only file that knows where data comes from. Swap in fetch here.
-apps/web/src/mock/          The whole in-browser "backend". Delete once the API is live.
-apps/web/src/mock/store.ts  tally(), the counting rule, shared by results and tally pages.
-apps/api/                   An older Worker (Hono + D1 + Clerk), not used by the preview.
+apps/web/src/lib/event.ts      Every event fact and link. Edit here when the schedule moves.
+apps/web/src/lib/hash.ts       The voter hash. hash.test.ts pins it.
+apps/web/src/lib/api.ts        The only file that knows where data comes from.
+packages/db/src/ballot.ts      tallyBallots(), the counting rule. Shared by Worker and browser.
+packages/db/schema.sql         The database. No table of people, by design.
+apps/api/src/routes/public.ts  Everything a voter touches. No password.
+apps/api/src/routes/admin/     Everything behind the organiser password.
+packages/db/src/csv.ts         CSV in and out. Reader and writer share a column list.
 ```
+
+**Proposals go in and out as CSV** on `/admin/talks`. The importer also reads the
+FOSS United submissions export as-is (`session_title`, `speaker`, `track`, `link`).
+The export writes the columns the importer accepts, so a list can be exported,
+edited in a spreadsheet and loaded back. Importing stops once voting opens and the
+ballot locks; exporting keeps working.
+
+**Organisers** share one password, set on the deployment as a Cloudflare secret:
+
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+```
+
+There are no accounts. It is a lock on the screens that can delete talks and wipe
+ballots, not a user system.
 
 Please keep one thing true: this site must never look like the official FOSS United page. The
 header says "Voting System" and the footer names who runs it.
@@ -93,19 +119,20 @@ header says "Voting System" and the footer names who runs it.
 ## Commands
 
 ```bash
-npm test             # tests
+npm test             # 88 tests; the API ones run against a real D1
 npm run typecheck
 npm run build        # static bundle in apps/web/dist
-npm run deploy       # build + wrangler deploy
+npm run deploy       # build + wrangler deploy, site and API together
 node apps/web/scripts/og/render-og.mjs   # regenerate the share card (needs Chrome)
 ```
 
-Deploys as a static, assets-only Cloudflare Worker via `./wrangler.jsonc`. Pushing to `main`
-deploys automatically.
+One Cloudflare Worker serves the site and the API, configured in `./wrangler.jsonc`.
+Pushing to `main` deploys automatically.
+
+See [HANDOFF.md](HANDOFF.md) for the state of the build and the traps in it.
 
 ## Still to do
 
+- Load the real CFP proposals. The database ships with none on purpose.
 - Replace the placeholder domain in `index.html`'s share tags.
 - Self-host Inter and the Phosphor icons so the page works on patchy conference wifi.
-- The sample proposals, tickets and emails in `mock/seed.ts` are invented; swap in the real
-  CFP export when it's ready.
