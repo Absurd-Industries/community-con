@@ -45,7 +45,7 @@ export default function VoterHash({
       }
     >
       <div className="flex items-baseline justify-between gap-3">
-        <p className="ui-label !mb-0">Your anonymous voter ID</p>
+        <p className="ui-label !mb-0">Your voter ID</p>
         <button
           onClick={copy}
           className="shrink-0 text-xs font-medium text-ink underline underline-offset-2 hover:text-accent-ink"

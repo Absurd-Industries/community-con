@@ -10,8 +10,10 @@ the event.
 
 ## Your privacy
 
-- Your ticket ID and email are hashed together **in your browser**. Only that anonymous hash is
-  ever sent, so we never see who you are and have no personal data to share.
+- Your ticket ID and email are hashed together **in your browser**. Only that hash is ever
+  sent, so we never see who you are.
+- FOSS United holds the ticket list, so when they verify the count they can match a hash back
+  to a ticket. Votes are only ever published as totals.
 - The page can't tell you if your details are right, because checking would mean knowing who
   you are. Copy both exactly from your ticket email: a typo means your vote won't count.
 - You can vote as often as you like. Only your latest ballot counts.
@@ -134,5 +136,4 @@ See [HANDOFF.md](HANDOFF.md) for the state of the build and the traps in it.
 ## Still to do
 
 - Load the real CFP proposals. The database ships with none on purpose.
-- Replace the placeholder domain in `index.html`'s share tags.
 - Self-host Inter and the Phosphor icons so the page works on patchy conference wifi.

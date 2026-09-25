@@ -16,8 +16,7 @@
 
     <!-- Social share card. Regenerate the image with:
          node apps/web/scripts/og/render-og.mjs
-         TODO: og:url and og:image still point at a placeholder domain. Swap
-         both when the real hostname is decided. -->
+         Absolute URLs on purpose: link unfurlers do not resolve relative ones. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Communi-Con Voting" />
     <meta property="og:title" content="Communi-Con Voting · IndiaFOSS 2026" />
@@ -25,8 +24,8 @@
       property="og:description"
       content="Vote for the Communi-Con talks at IndiaFOSS 2026. The 7 with the most votes go on stage in Hall 1."
     />
-    <meta property="og:url" content="https://community-con.pages.dev/" />
-    <meta property="og:image" content="https://community-con.pages.dev/og-image.png" />
+    <meta property="og:url" content="https://community-con.forsakenlegacy.workers.dev/" />
+    <meta property="og:image" content="https://community-con.forsakenlegacy.workers.dev/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -41,7 +40,7 @@
       name="twitter:description"
       content="Vote for the Communi-Con talks at IndiaFOSS 2026. The 7 with the most votes go on stage in Hall 1."
     />
-    <meta name="twitter:image" content="https://community-con.pages.dev/og-image.png" />
+    <meta name="twitter:image" content="https://community-con.forsakenlegacy.workers.dev/og-image.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

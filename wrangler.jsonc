@@ -23,7 +23,7 @@
     {
       "binding": "DB",
       "database_name": "community-con",
-      "database_id": "f30fedb9-e8bd-4ef3-a58a-b189387c4e25",
+      "database_id": "622c0123-3808-4723-b554-8224de5360e7",
       "migrations_dir": "apps/api/migrations"
     }
   ],

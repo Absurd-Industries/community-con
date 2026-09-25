@@ -127,8 +127,9 @@ function Footer() {
         <p className="flex gap-2">
           <i className="ph-bold ph-lock-simple mt-1 shrink-0 text-ink" aria-hidden="true" />
           <span>
-            Your ticket ID and email never leave your browser. We only ever receive an
-            anonymous hash, so there’s no personal data to share.
+            Your ticket ID and email never leave your browser. We only receive a hash of them,
+            so we can’t tell who you are. FOSS United, who hold the ticket list, can match
+            hashes to tickets to verify the count. Votes are only ever published as totals.
           </span>
         </p>
         <p>

@@ -227,14 +227,15 @@ export default function LandingPage() {
             <summary>Can I vote for my own talk?</summary>
             <p>
               Go ahead. One vote among hundreds won’t move the needle, and stopping you would
-              mean linking proposals to tickets, which costs everyone their anonymity.
+              mean linking proposals to tickets, which costs everyone their privacy.
             </p>
           </details>
           <details className="faq-item">
             <summary>Is my vote anonymous?</summary>
             <p>
-              Yes. Your details are hashed before anything is stored, and ballots only ever
-              appear as totals.
+              To us, yes: we never see your ticket or your email. FOSS United holds the ticket
+              list, so when they verify the count they could match a ballot to a ticket.
+              Results are only ever published as totals.
             </p>
           </details>
           <details className="faq-item">

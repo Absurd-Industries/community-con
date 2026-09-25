@@ -22,11 +22,13 @@ and the site must never look like one.
 | Voter's hash shown to them | Done | live page screenshot |
 | Ballot rate limit | Done | 4 tests incl. fail-open |
 | Talks CSV import + export | Done | 9 tests; live round-trip |
-| Talk proposals loaded | **Not done** — database is empty | row count query |
-| Official ticket list | **Not done** — arrives at tally time | n/a |
+| Talk proposals loaded | **Not done**: database is empty | row count query |
+| Official ticket list | **Not done**: arrives at tally time | n/a |
 
-**Live:** https://community-con.balub997.workers.dev
-**Organiser password:** set as a Cloudflare secret. Ask Balu; rotate with
+**Live:** https://community-con.forsakenlegacy.workers.dev (the only voting URL; Balu's
+original `balub997` deployment should be closed so votes cannot split across two sites)
+**Database:** D1 `community-con`, id `622c0123-3808-4723-b554-8224de5360e7`, APAC.
+**Organiser password:** a Cloudflare secret, held by Amit. Rotate with
 `npx wrangler secret put ADMIN_PASSWORD`.
 
 ## How it works, in one pass
@@ -39,7 +41,7 @@ voter_hash = SHA256_hex( upper(trim(ticket)) + "+" + lower(trim(email)) )
 ```
 
 The server never sees the ticket or the email, so it cannot tell a real voter
-from an invented one — and deliberately does not try. Every ballot is accepted,
+from an invented one, and deliberately does not try. Every ballot is accepted,
 appended with a timestamp, and nothing is decided until the tally.
 
 At tally time an organiser pastes the official list of claimed tickets. The
@@ -47,7 +49,7 @@ browser hashes those pairs the same way and sends the hashes. The server drops
 ballots whose hash is not on the list, keeps the latest ballot per remaining
 voter, and counts what is left.
 
-That rule lives in one place — `packages/db/src/ballot.ts` `tallyBallots` — and
+That rule lives in one place (`packages/db/src/ballot.ts` `tallyBallots`) and
 is imported by both the Worker and the browser, so the organiser's preview and
 the real count cannot drift apart.
 
@@ -59,8 +61,8 @@ the real count cannot drift apart.
 - `run_worker_first: ["/api/*"]` in `wrangler.jsonc` is load-bearing. Without
   it the SPA fallback answers `/api/*` with `index.html` and the Worker never
   sees an API request.
-- D1 database `community-con`, id `f30fedb9-e8bd-4ef3-a58a-b189387c4e25`,
-  region APAC.
+- D1 database `community-con`, id `622c0123-3808-4723-b554-8224de5360e7`,
+  region APAC, on the forsakenlegacy account.
 - `ADMIN_PASSWORD` is a Worker secret, not a var. An unset secret makes every
   organiser route return 503 rather than opening the door.
 - wrangler 4.112 locally; the installed Workers runtime caps the compatibility
@@ -75,7 +77,7 @@ the real count cannot drift apart.
   every vote had silently been refused with 409 after the open call returned
   422. `packages/db/demo-talks.sql` therefore ships 12 talks, not 5.
 - **The ballot locks itself** the first time voting opens, and stays locked.
-  Talks cannot be added, edited or deleted after that — only withdrawn. Load the
+  Talks cannot be added, edited or deleted after that, only withdrawn. Load the
   proposals *before* Sat 26 Sep 17:00 IST.
 - **`reset-ballot` clears the schedule too.** It sets the force status to
   `closed` and nulls both dates. After running it, re-apply `packages/db/seed.sql`
@@ -89,7 +91,7 @@ the real count cannot drift apart.
   as intended.
 - **Password in sessionStorage**, not localStorage: closing the tab forgets it.
 - **No unique constraint on `voter_hash`.** Enforcing one would make a rejected
-  insert reveal that the hash had voted before — an oracle for enumerating
+  insert reveal that the hash had voted before: an oracle for enumerating
   attendees. Duplicates are resolved by the tally instead.
 - **The database is seeded with the conference row only.** No invented
   proposals: made-up speaker names on a real ballot would be worse than an
@@ -104,10 +106,6 @@ the real count cannot drift apart.
   so every icon stays invisible until ~150KB arrives. Self-hosting them, or
   inlining the nineteen icons actually used as SVG, is worth doing before the
   event. Deliberately left alone here to keep this change to the backend.
-- The share tags in `index.html` still point at `community-con.pages.dev`,
-  which does not resolve. The live address is
-  `community-con.balub997.workers.dev`. One-line fix, left out for the same
-  reason.
 - Nothing is scheduled to open or close voting automatically. The dates in the
   conference row do it; no cron is involved.
 
@@ -122,7 +120,7 @@ the real count cannot drift apart.
    Note: a CSV with no `duration_minutes` column imports every talk as 0
    minutes. Harmless for voters - the public ballot never shows a duration -
    but the organiser list will read "0 min" until it is set.
-2. Set `votes_per_voter` to something the talk count allows — see the trap above.
+2. Set `votes_per_voter` to something the talk count allows (see the trap above).
 3. Do a dry run with James (the independent checker): hand over
    `/api/admin/results/ballots.csv` plus the ticket list, and confirm his
    independent count matches.
@@ -153,7 +151,7 @@ they are one deployment and cannot be out of step.
 
 ## What was verified, and how
 
-27 checks were run against the live deployment on 2026-09-23 — all passed.
+27 checks were run against the live deployment on 2026-09-23, and all passed.
 They covered: a ballot accepted with no credentials; an invented ticket getting
 a byte-identical response to a real one; superseded ballots dropped; the ticket
 list changing the count; results refusing to publish while voting is open; the
