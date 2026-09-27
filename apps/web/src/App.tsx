@@ -1,4 +1,6 @@
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { apiFetch } from './lib/api.js'
 import { clearAdminPassword, useAdminMode } from './lib/admin.js'
 import { EVENT } from './lib/event.js'
 import AdminGate from './components/AdminGate.js'
@@ -52,9 +54,34 @@ function Wordmark() {
   )
 }
 
+interface ConferenceState {
+  voting_status: 'open' | 'closed'
+  voting_closes_at: number | null
+  results_public: boolean
+  server_now: number
+}
+
+/**
+ * The header's one call to action follows the event: Vote while there is a vote
+ * to cast, Results once they are out, and nothing in between - a "Vote" button
+ * that leads to a closed ballot is just a dead end.
+ */
+function useHeaderAction(): { to: string; label: string } | null {
+  const { data } = useQuery({
+    queryKey: ['conference'],
+    queryFn: () => apiFetch<ConferenceState>('/api/conference'),
+  })
+  if (!data) return { to: '/vote', label: 'Vote' }
+  if (data.results_public) return { to: '/#results', label: 'Results' }
+  const over =
+    data.voting_status !== 'open' && data.voting_closes_at != null && data.server_now > data.voting_closes_at
+  return over ? null : { to: '/vote', label: 'Vote' }
+}
+
 function Header() {
   const isAdmin = useAdminMode()
   const { pathname } = useLocation()
+  const action = useHeaderAction()
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface-sunken/85 backdrop-blur-md">
@@ -85,12 +112,14 @@ function Header() {
               Lock
             </button>
           )}
-          <Link
-            to="/vote"
-            className={`btn btn-sm ${pathname === '/vote' ? 'btn-outline' : 'btn-primary'}`}
-          >
-            Vote
-          </Link>
+          {action && (
+            <Link
+              to={action.to}
+              className={`btn btn-sm ${pathname === action.to ? 'btn-outline' : 'btn-primary'}`}
+            >
+              {action.label}
+            </Link>
+          )}
         </div>
       </div>
     </header>

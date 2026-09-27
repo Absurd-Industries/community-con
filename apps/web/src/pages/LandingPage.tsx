@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { apiFetch } from '../lib/api.js'
 import { formatDuration } from '../lib/time.js'
 import { EVENT, SCHEDULE, formatIst, formatIstTime } from '../lib/event.js'
 import { useEffect, useState } from 'react'
+import ResultsList, { type PublicResultsResponse } from '../components/ResultsList.js'
 
 interface Conference {
   name: string
@@ -56,10 +57,48 @@ export default function LandingPage() {
   })
 
   const isOpen = conference?.voting_status === 'open'
-  const target = isOpen ? conference?.voting_closes_at : conference?.voting_opens_at
   const offset = conference ? conference.server_now - Date.now() : 0
-  const showCountdown = target != null && target > now + offset
+  const serverNow = now + offset
   const slots = conference?.votes_per_voter ?? EVENT.slotCount
+
+  /**
+   * The page has three jobs over the event, and says only what's true now:
+   *   voting   - before and during the vote: invite people to the ballot.
+   *   counting - voting is over, results not out: nothing to click, say when.
+   *   results  - results published: lead with them, right here.
+   * "Over" means past the closing time, not merely closed: an organiser can
+   * force voting closed before it opens, and that must still read as "voting".
+   */
+  const votingOver =
+    !isOpen && conference?.voting_closes_at != null && serverNow > conference.voting_closes_at
+  const phase: 'voting' | 'counting' | 'results' = conference?.results_public
+    ? 'results'
+    : votingOver
+      ? 'counting'
+      : 'voting'
+
+  const target =
+    phase === 'counting'
+      ? SCHEDULE.resultsAt
+      : isOpen
+        ? conference?.voting_closes_at
+        : conference?.voting_opens_at
+  const showCountdown = target != null && target > serverNow
+
+  const { data: results } = useQuery({
+    queryKey: ['public-results'],
+    queryFn: () => apiFetch<PublicResultsResponse>('/api/results'),
+    enabled: phase === 'results',
+    retry: false,
+  })
+
+  // "/#results" from the header: scroll once the list has actually rendered.
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash === '#results' && results) {
+      document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [hash, results])
 
   /**
    * Mirrors the list on the official Communi-Con page, and says so. Showing
@@ -94,53 +133,126 @@ export default function LandingPage() {
           <p className="eyebrow">
             {EVENT.conference} · {EVENT.name}
           </p>
-          <h1 className="page-title mt-3 max-w-xl">
-            {/* nowrap: otherwise narrow screens break the name at its hyphen. */}
-            Vote for the <span className="whitespace-nowrap">{EVENT.name}</span> talks
-          </h1>
-          <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
-            {EVENT.conference} ticket holders pick the talks. The {slots} with the most votes go
-            on stage in {EVENT.hall}, {EVENT.slotMinutes} minutes each.
-          </p>
+          {/* nowrap on the name: otherwise narrow screens break it at its hyphen. */}
+          {phase === 'results' ? (
+            <>
+              <h1 className="page-title mt-3 max-w-xl">
+                The <span className="whitespace-nowrap">{EVENT.name}</span> line-up is in
+              </h1>
+              <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
+                {EVENT.conference} ticket holders picked these {slots} talks. Catch them on stage
+                in {EVENT.hall} at {formatIstTime(SCHEDULE.stageStartsAt)}, {EVENT.slotMinutes}{' '}
+                minutes each.
+              </p>
+            </>
+          ) : phase === 'counting' ? (
+            <>
+              <h1 className="page-title mt-3 max-w-xl">Thanks for voting</h1>
+              <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
+                Voting has closed. The votes are being checked against the ticket list, and the
+                results go up here at {formatIstTime(SCHEDULE.resultsAt)}.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="page-title mt-3 max-w-xl">
+                Vote for the <span className="whitespace-nowrap">{EVENT.name}</span> talks
+              </h1>
+              <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ink-light">
+                {EVENT.conference} ticket holders pick the talks. The {slots} with the most votes
+                go on stage in {EVENT.hall}, {EVENT.slotMinutes} minutes each.
+              </p>
+            </>
+          )}
           <div className="mt-6 flex flex-wrap gap-2.5">
-            <Link to="/vote" className="btn-primary">
-              {isOpen ? 'Vote now' : 'Open the ballot'}
-            </Link>
+            {phase === 'voting' && (
+              <Link to="/vote" className="btn-primary">
+                {isOpen ? 'Vote now' : 'Open the ballot'}
+              </Link>
+            )}
+            {phase === 'results' && (
+              <a href="#results" className="btn-primary">
+                See the results
+              </a>
+            )}
             <a href={EVENT.links.event} target="_blank" rel="noreferrer" className="btn-outline">
               Official event page
               <i className="ph ph-arrow-up-right" aria-hidden="true" />
             </a>
-            {conference?.results_public && (
-              <Link to="/results" className="btn-ghost">
-                See the results
-              </Link>
-            )}
           </div>
         </div>
 
         <div className="card-ink flex flex-col justify-center p-7">
           {/* The festival's maze motif, tinted by this element's text colour. */}
           <div className="maze text-accent opacity-30" aria-hidden="true" />
-          <div className="relative">
-            <p className="text-xs font-medium uppercase tracking-wide text-surface/60">
-              {showCountdown ? (isOpen ? 'Voting closes in' : 'Voting opens in') : 'Voting'}
-            </p>
-            <p className="mt-2 font-mono text-3xl font-semibold tabular-nums">
-              {showCountdown
-                ? formatDuration(target! - (now + offset))
-                : isOpen
-                  ? 'Open'
-                  : 'Closed'}
-            </p>
-          </div>
-          <dl className="relative mt-7 border-t border-white/15 pt-5 text-sm">
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-surface/60">Votes per ticket</dt>
-              <dd className="font-mono font-semibold">{slots}</dd>
-            </div>
-          </dl>
+          {phase === 'results' ? (
+            <>
+              <div className="relative">
+                <p className="text-xs font-medium uppercase tracking-wide text-surface/60">
+                  Voting has closed
+                </p>
+                <p className="mt-2 text-3xl font-bold tracking-tight">Results announced</p>
+              </div>
+              <dl className="relative mt-7 space-y-3 border-t border-white/15 pt-5 text-sm">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-surface/60">Verified voters</dt>
+                  <dd className="font-mono font-semibold">
+                    {results?.stats.participating_voters ?? '…'}
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-surface/60">On stage</dt>
+                  <dd className="text-right font-mono text-xs">
+                    {formatIstTime(SCHEDULE.stageStartsAt)}, {EVENT.hall}
+                  </dd>
+                </div>
+              </dl>
+            </>
+          ) : (
+            <>
+              <div className="relative">
+                <p className="text-xs font-medium uppercase tracking-wide text-surface/60">
+                  {phase === 'counting'
+                    ? showCountdown
+                      ? 'Results in'
+                      : 'Voting has closed'
+                    : showCountdown
+                      ? isOpen
+                        ? 'Voting closes in'
+                        : 'Voting opens in'
+                      : 'Voting'}
+                </p>
+                <p className="mt-2 font-mono text-3xl font-semibold tabular-nums">
+                  {showCountdown
+                    ? formatDuration(target! - serverNow)
+                    : phase === 'counting'
+                      ? 'Results soon'
+                      : isOpen
+                        ? 'Open'
+                        : 'Closed'}
+                </p>
+              </div>
+              <dl className="relative mt-7 border-t border-white/15 pt-5 text-sm">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-surface/60">Votes per ticket</dt>
+                  <dd className="font-mono font-semibold">{slots}</dd>
+                </div>
+              </dl>
+            </>
+          )}
         </div>
       </section>
+
+      {phase === 'results' && results && (
+        <section id="results" className="scroll-mt-24">
+          <h2 className="section-title">Results</h2>
+          <p className="mb-4 mt-1 text-sm text-ink-faint">
+            Verified against the official ticket list: {results.stats.participating_voters}{' '}
+            voters, {results.stats.total_votes} votes.
+          </p>
+          <ResultsList talks={results.talks} slots={results.method.votes_per_voter} />
+        </section>
+      )}
 
       {/* Key times, credited to where they came from. */}
       <section>
