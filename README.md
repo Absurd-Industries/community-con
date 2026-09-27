@@ -1,5 +1,7 @@
 # Communi-Con Voting System
 
+**Live at <https://communicon.absurd.industries>**
+
 Vote for the Communi-Con talks at **IndiaFOSS 2026**. Ticket holders pick the community talks,
 and the 7 with the most votes go on stage in Hall 1, 10 minutes each.
 
@@ -30,6 +32,74 @@ the event.
 Event details and talk proposals come from
 [FOSS United's Communi-Con page](https://fossunited.org/c/indiafoss/2026communi-con), shared
 under CC BY-SA.
+
+---
+
+## For organisers
+
+Everything happens at **<https://communicon.absurd.industries/admin>**. Unlock it with the
+shared organiser password (ask whoever runs the vote).
+
+### 1. Upload the talks (Sat 4:00 to 5:00 pm)
+
+Proposals close at 4:00 pm. Voting opens at 5:00 pm, and **the ballot locks itself at that
+moment**: after that, talks can only be withdrawn, never added or edited.
+
+1. Open **`/admin/talks`**.
+2. In the **CSV** box, choose the file. The FOSS United submissions export works as-is
+   (`session_title`, `speaker`, `track`, `link`). So does our own format: `title`,
+   `description`, `duration_minutes`, `presenter_name`, `presenter_bio`, `presenter_email`,
+   `talk_type`, `cfp_url`, `cfp_content`. Only `title` and `presenter_name` are required.
+3. Check the count. There are 7 slots, so with 7 or fewer talks everyone gets on stage and
+   the vote decides nothing.
+
+**Importing adds to the list; it doesn't replace it.** Uploading the same file twice gives
+you every talk twice. To fix mistakes, delete the wrong talks first, or **Export** the list,
+fix it in a spreadsheet, delete everything and import once. All of this has to happen before
+5:00 pm.
+
+**Running late?** On `/admin/conference`, under **Override Status**, choose **CLOSED** and click
+**Save Voting Settings**. That keeps the ballot unlocked. Upload the talks, then switch back to
+**SCHEDULED** and save. Voting opens late instead of opening empty.
+
+### 2. While voting is open
+
+Nothing to do. Every submission is kept, and a voter's latest ballot replaces their earlier
+ones at count time.
+
+### 3. Count and download (Sun, after 12:00 pm)
+
+1. **Verify:** on **`/admin/tally`**, paste the official list of claimed tickets, one
+   `ticket_id,email` per line, then click **Run tally**, then **Commit this ticket list**. The
+   hashing happens in your browser; only hashes are sent. Until you commit a list, results
+   count every ballot, including made-up ones.
+2. **Break ties:** on **`/admin/results`**, a tie across the 7th slot is marked undecided.
+   Record the tie-break there.
+3. **Download the results:** **Export CSV** on `/admin/results` gives `results.csv` (title,
+   presenter, votes).
+4. **Publish (2:00 pm):** click **Publish Results** on `/admin/results` to open the public
+   `/results` page. This is blocked while voting is still open.
+
+### Files for an independent recount
+
+| File | Where | What's in it |
+| --- | --- | --- |
+| `proposals-<date>.csv` | `/admin/talks` → **Export proposals** | Every talk, with the `id` that ballots refer to. Includes presenter emails, so keep it private. |
+| `ballots.csv` | Command below, no button yet | Every ballot ever cast: `voter_hash`, `cast_at_iso`, `cast_at_ms`, `talk_ids`. No emails, no tickets. |
+
+```bash
+curl -H "X-Admin-Password: $ADMIN_PASSWORD" \
+  https://communicon.absurd.industries/api/admin/results/ballots.csv -o ballots.csv
+```
+
+The recount rule is the one on the site: hash each `ticket_id,email` pair from the official
+list as below, drop ballots whose hash isn't on it, and keep each hash's latest ballot.
+
+### Warnings
+
+- **Never run `npm run db:seed:remote` again.** It deletes every ballot.
+- **Never set Override Status to OPEN to "test" it.** That locks the ballot, even an empty one.
+- **Pushing to `main` redeploys the live site.** Avoid it while voting is open unless you mean it.
 
 ---
 
@@ -121,7 +191,7 @@ header says "Voting System" and the footer names who runs it.
 ## Commands
 
 ```bash
-npm test             # 88 tests; the API ones run against a real D1
+npm test             # 116 tests; the API ones run against a real D1
 npm run typecheck
 npm run build        # static bundle in apps/web/dist
 npm run deploy       # build + wrangler deploy, site and API together
@@ -135,5 +205,6 @@ See [HANDOFF.md](HANDOFF.md) for the state of the build and the traps in it.
 
 ## Still to do
 
-- Load the real CFP proposals. The database ships with none on purpose.
+- Add a **Download ballots.csv** button to `/admin/results`, so the recount file doesn't need
+  `curl`.
 - Self-host Inter and the Phosphor icons so the page works on patchy conference wifi.
